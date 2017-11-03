@@ -1,23 +1,41 @@
 <robot>
   <robot_specifications>
     <footprint>
-      <radius>0.3</radius>
+      <footprint_specifications>
+        <radius>0.3</radius>
+      </footprint_specifications>
     </footprint>
     <laser>
-      <filename>laser.xml</filename>
       <laser_specifications>
+        <max_range>4</max_range>
         <pose>
+          <x>0</x>
+          <y>0</y>
           <theta>0.53</theta>
         </pose>
+        <noise>
+          <noise_specifications>
+            <noise_mean>0</noise_mean>
+            <noise_std>0.03</noise_std>
+          </noise_specifications>
+        </noise>
       </laser_specifications>
     </laser>
     <laser>
-      <filename>laser.xml</filename>
       <laser_specifications>
+        <max_range>4</max_range>
         <pose>
+          <x>0</x>
+          <y>0</y>
           <theta>-0.53</theta>
         </pose>
+        <noise>
+          <noise_specifications>
+            <noise_mean>0</noise_mean>
+            <noise_std>0.03</noise_std>
+          </noise_specifications>
+        </noise>
       </laser_specifications>
     </laser>
   </robot_specifications>
-<robot>
+</robot>
