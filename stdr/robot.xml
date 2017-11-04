@@ -2,23 +2,23 @@
   <robot_specifications>
     <footprint>
       <footprint_specifications>
-        <radius>2</radius>
+        <radius>0.5</radius>
       </footprint_specifications>
     </footprint>
     <initial_pose>
-      <x>72</x>
-      <y>72</y>
-      <theta>0</theta>
+      <x>18</x>
+      <y>18</y>
+      <theta>1.57079632679</theta>
     </initial_pose>
     <laser>
       <laser_specifications>
-        <max_angle>0.3</max_angle>
-        <min_angle>-0.3</min_angle>
+        <max_angle>0.39269908169</max_angle>
+        <min_angle>-0.39269908169</min_angle>
         <max_range>4</max_range>
         <pose>
-          <x>1.55884572681</x>
-          <y>0.9</y>
-          <theta>0.52359877559</theta>
+          <x>0.32360679775</x>
+          <y>0.23511410091</y>
+          <theta>0.62831853071</theta>
         </pose>
 <!--        <noise>
           <noise_specifications>
@@ -30,13 +30,13 @@
     </laser>
     <laser>
       <laser_specifications>
-        <max_angle>0.3</max_angle>
-        <min_angle>-0.3</min_angle>
+        <max_angle>0.39269908169</max_angle>
+        <min_angle>-0.39269908169</min_angle>
         <max_range>4</max_range>
         <pose>
-          <x>1.55884572681</x>
-          <y>-0.9</y>
-          <theta>-0.52359877559</theta>
+          <x>0.32360679775</x>
+          <y>-0.23511410091</y>
+          <theta>-0.62831853071</theta>
         </pose>
 <!--        <noise>
           <noise_specifications>
