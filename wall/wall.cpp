@@ -15,10 +15,10 @@
 
 using namespace std;
 
-class FollowWall {
+class Wall {
 
 public:
-	FollowWall(string name) {
+	Wall(string name) {
 
 		this->name = name;
 		this->signal = (rand() % 2) * 2 - 1;;
@@ -30,8 +30,8 @@ public:
 
 		// Initiate the subscribers.
 		// We subscribe to the robots lasers to detect walls.
-		sub0 = nh.subscribe(name + "/laser0", 1000, &FollowWall::laser0Handler, this);
-		sub1 = nh.subscribe(name + "/laser1", 1000, &FollowWall::laser1Handler, this);
+		sub0 = nh.subscribe(name + "/laser0", 1000, &Wall::laser0Handler, this);
+		sub1 = nh.subscribe(name + "/laser1", 1000, &Wall::laser1Handler, this);
 
 	}
 
@@ -40,26 +40,44 @@ private:
 	ros::Publisher pub;
 	ros::Subscriber sub0;
 	ros::Subscriber sub1;
-	sensor_msgs::LaserScan msg0;
-	sensor_msgs::LaserScan msg1;
 	int signal; // Determines whether the robot rotates counterclockwise or clockwise.
 	int counter; // Incremented in each robot movement published message.
 	int next; // When to reset the counter and randomize the signal.
 	string name; // Name of the robot to move.
+	float laser0; // Left side laser max value within range
+	float laser1; // Right side laser max value within range
 
 	void laser0Handler(const sensor_msgs::LaserScan& msg) {
-		this->msg0 = msg;
-		ROS_INFO_STREAM("LASER 0: " << this->msg0);
+		this->laser0 = laserParser(msg);
+		ROS_INFO_STREAM("Laser 0: " << this->laser0);
 		move();
 	}
 
 	void laser1Handler(const sensor_msgs::LaserScan& msg) {
-		this->msg1 = msg;
-		ROS_INFO_STREAM("LASER 0: " << this->msg1);
+		this->laser1 = laserParser(msg);
+		ROS_INFO_STREAM("Laser 1: " << this->laser1);
 		move();
 	}
 
+	float laserParser(const sensor_msgs::LaserScan& msg) {
+		float value = 0;
+		float new_value = 0;
+		for (int i = 0; i < msg.ranges.size(); i++) {
+			new_value = msg.ranges[i];
+			if (new_value >= msg.range_min && new_value <= msg.range_max && new_value > value)
+				value = new_value;
+		}
+		return value;
+	}
+
 	void move() {
+		if (this->laser0 == 0 && this->laser1 == 0)
+			randomMove();
+		else
+			wallMove();
+	}
+
+	void randomMove() {
 
 		this->counter++;	
 
@@ -85,6 +103,10 @@ private:
 			<< " linear=" << out_msg.linear.x << " angular=" << out_msg.angular.z);
 	}
 
+	void wallMove() {
+		randomMove();
+	}
+
 };
 
 int main(int argc, char **argv) {
@@ -95,9 +117,9 @@ int main(int argc, char **argv) {
 	// Initialize the ROS system and become a node.
 	ros::init(argc, argv, "publish_velocity");
 
-	// Create an object of the FollowWall class that will take care of everything.
+	// Create an object of the Wall class that will take care of everything.
 	string name(argv[1]);
-	FollowWall *followWall = new FollowWall(name);
+	Wall *wall = new Wall(name);
 
 	// Let ROS take over.
 	ros::spin();
