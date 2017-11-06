@@ -10,7 +10,7 @@
 
   <url type="repository">https://todo.com</url>
 
-  <author>João Cardoso</author>
+  <author>todo</author>
 
   <buildtool_depend>catkin</buildtool_depend>
 
