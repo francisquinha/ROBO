@@ -33,6 +33,11 @@ public:
 		sub0 = nh.subscribe(name + "/laser0", 1000, &Wall::laser0Handler, this);
 		sub1 = nh.subscribe(name + "/laser1", 1000, &Wall::laser1Handler, this);
 
+/*		ros::Rate rate(2);
+		while(ros::ok()) {
+			move();
+			rate.sleep();
+		}*/
 	}
 
 private:
@@ -44,34 +49,42 @@ private:
 	int counter; // Incremented in each robot movement published message.
 	int next; // When to reset the counter and randomize the signal.
 	string name; // Name of the robot to move.
-	float laser0; // Left side laser max value within range
-	float laser1; // Right side laser max value within range
+	float laser0_min; // Left side laser, min value within range
+	float laser1_min; // Right side laser, min value within range
+	float laser0_max; // Left side laser, max value within range
+	float laser1_max; // Right side laser, max value within range
 
 	void laser0Handler(const sensor_msgs::LaserScan& msg) {
-		this->laser0 = laserParser(msg);
-		ROS_INFO_STREAM("Laser 0: " << this->laser0);
+		laserParser(msg, this->laser0_min, this->laser0_max);
+		ROS_INFO_STREAM("Laser 0 min: " << this->laser0_min << ". Laser 0 max:" << this->laser0_max);
 		move();
 	}
 
 	void laser1Handler(const sensor_msgs::LaserScan& msg) {
-		this->laser1 = laserParser(msg);
-		ROS_INFO_STREAM("Laser 1: " << this->laser1);
+		laserParser(msg, this->laser1_min, this->laser1_max);
+		ROS_INFO_STREAM("Laser 1 min: " << this->laser1_min << ". Laser 1 max:" << this->laser1_max);
 		move();
 	}
 
-	float laserParser(const sensor_msgs::LaserScan& msg) {
-		float value = 0;
-		float new_value = 0;
+	void laserParser(const sensor_msgs::LaserScan& msg, float& min_value, float& max_value) {
+		min_value = FLT_MAX;
+		max_value = 0;
+		float new_value;
 		for (int i = 0; i < msg.ranges.size(); i++) {
 			new_value = msg.ranges[i];
-			if (new_value >= msg.range_min && new_value <= msg.range_max && new_value > value)
-				value = new_value;
+			if (new_value >= msg.range_min && new_value <= msg.range_max) {
+				if (new_value < min_value) 
+					min_value = new_value;
+				if (new_value > max_value)
+					max_value = new_value;
+			}
 		}
-		return value;
+		if (min_value == FLT_MAX)
+			min_value = 0;
 	}
 
 	void move() {
-		if (this->laser0 == 0 && this->laser1 == 0)
+		if (this->laser0_max == 0 && this->laser1_max == 0)
 			randomMove();
 		else
 			wallMove();
