@@ -1,9 +1,11 @@
-// This program publishes randomly-generated velocity messages for a turtlesim turtle.
-// If the turtle hits a wall it tries to move away from it by turning M_PI / 2 or -M_PI / 2.
+// This program publishes randomly-generated velocity messages for a robot.
 #include <ros/ros.h>
 
 // For geometry_msgs::Twist 
 #include <geometry_msgs/Twist.h>
+
+// For sensor_msgs::LaserScan 
+#include <sensor_msgs/LaserScan.h>
 
 // For rand() and RAND_MAX
 #include <stdlib.h>
@@ -13,35 +15,49 @@
 
 using namespace std;
 
-class RandomMove {
+class FollowWall {
 
 public:
-	RandomMove(string name) {
+	FollowWall(string name) {
 
 		this->name = name;
-
-		// Initiate the publisher.
-		pub = nh.advertise<geometry_msgs::Twist>(name + "/cmd_vel", 1000);
-
 		this->signal = (rand() % 2) * 2 - 1;;
 		this->counter = 0;
 		this->next = (rand() % 10 + 1) * 10;
 
-		ros::Rate rate(2);
-		while(ros::ok()) {
-			move();
-			rate.sleep();
-		}
+		// Initiate the publisher.
+		pub = nh.advertise<geometry_msgs::Twist>(name + "/cmd_vel", 1000);
+
+		// Initiate the subscribers.
+		// We subscribe to the robots lasers to detect walls.
+		sub0 = nh.subscribe(name + "/laser0", 1000, &FollowWall::laser0Handler, this);
+		sub1 = nh.subscribe(name + "/laser1", 1000, &FollowWall::laser1Handler, this);
 
 	}
 
 private:
 	ros::NodeHandle nh;
 	ros::Publisher pub;
+	ros::Subscriber sub0;
+	ros::Subscriber sub1;
+	sensor_msgs::LaserScan msg0;
+	sensor_msgs::LaserScan msg1;
 	int signal; // Determines whether the robot rotates counterclockwise or clockwise.
 	int counter; // Incremented in each robot movement published message.
 	int next; // When to reset the counter and randomize the signal.
 	string name; // Name of the robot to move.
+
+	void laser0Handler(const sensor_msgs::LaserScan& msg) {
+		this->msg0 = msg;
+		ROS_INFO_STREAM("LASER 0: " << this->msg0);
+		move();
+	}
+
+	void laser1Handler(const sensor_msgs::LaserScan& msg) {
+		this->msg1 = msg;
+		ROS_INFO_STREAM("LASER 0: " << this->msg1);
+		move();
+	}
 
 	void move() {
 
@@ -79,9 +95,9 @@ int main(int argc, char **argv) {
 	// Initialize the ROS system and become a node.
 	ros::init(argc, argv, "publish_velocity");
 
-	// Create an object of the RandomMove class that will take care of everything.
+	// Create an object of the FollowWall class that will take care of everything.
 	string name(argv[1]);
-	RandomMove *randomMove = new RandomMove(name);
+	FollowWall *followWall = new FollowWall(name);
 
 	// Let ROS take over.
 	ros::spin();
