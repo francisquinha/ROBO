@@ -1,0 +1,49 @@
+<launch>
+	<node
+		pkg="turtlesim"
+		type="turtlesim_node"
+		name="turtlesim"/>
+	<node
+		pkg="agitr"
+		type="spawn_turtle"
+		name="spawn_turtle2"
+		args="turtle2 5.5 5.5 0"/>
+	<node
+		pkg="agitr"
+		type="spawn_turtle"
+		name="spawn_turtle3"
+		args="turtle3 0 0 0.78539816339"/>
+	<node
+		pkg="agitr"
+		type="change_turtle_pen"
+		name="change_turtle_pen1"
+		args="turtle1 255 255 0 3 0"/>
+	<node
+		pkg="agitr"
+		type="change_turtle_pen"
+		name="change_turtle_pen2"
+		args="turtle2 0 255 0 3 0"/>
+	<node
+		pkg="agitr"
+		type="change_turtle_pen"
+		name="change_turtle_pen3"
+		args="turtle3 255 0 0 3 0"/>
+	<node
+		pkg="agitr"
+		type="follow_turtle"
+		name="follow_turtle"/>
+	<node
+		pkg="turtlesim"
+		type="turtle_teleop_key"
+		name="teleop_key"/>
+	<node
+		pkg="agitr"
+		type="pubvel"
+		name="publish_velocity1"
+		args="turtle1"/>
+	<node
+		pkg="agitr"
+		type="pubvel"
+		name="publish_velocity2"
+		args="turtle2"/>
+</launch>
