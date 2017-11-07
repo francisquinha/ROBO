@@ -6,9 +6,9 @@ robot:
           points:
             []
     - initial_pose:
-        x: 3.0
-        y: 3.0
-        theta: 0
+        x: 12.0
+        y: 15.0
+        theta: 1.57079632679
     - laser:
         laser_specifications:
           max_angle: 0.39269908169

@@ -25,6 +25,13 @@ public:
 		this->counter = 0;
 		this->next = (rand() % 10 + 1) * 10;
 
+		this->laser0_bot = FLT_MAX;
+		this->laser1_bot = FLT_MAX;
+		this->laser0_top = FLT_MAX;
+		this->laser1_top = FLT_MAX;
+
+		this->state = unknown;
+
 		// Initiate the publisher.
 		pub = nh.advertise<geometry_msgs::Twist>(name + "/cmd_vel", 1000);
 
@@ -49,42 +56,36 @@ private:
 	int counter; // Incremented in each robot movement published message.
 	int next; // When to reset the counter and randomize the signal.
 	string name; // Name of the robot to move.
-	float laser0_min; // Left side laser, min value within range
-	float laser1_min; // Right side laser, min value within range
-	float laser0_max; // Left side laser, max value within range
-	float laser1_max; // Right side laser, max value within range
+	float laser0_bot; // Left side laser, bottom value within range
+	float laser1_bot; // Right side laser, bottom value within range
+	float laser0_top; // Left side laser, top value within range
+	float laser1_top; // Right side laser, top value within range
+	enum State {unknown, turn_right};
+	State state;
 
 	void laser0Handler(const sensor_msgs::LaserScan& msg) {
-		laserParser(msg, this->laser0_min, this->laser0_max);
-		ROS_INFO_STREAM("Laser 0 min: " << this->laser0_min << ". Laser 0 max:" << this->laser0_max);
+		laserParser(msg, this->laser0_bot, this->laser0_top);
+		ROS_INFO_STREAM("Laser 0 bottom: " << this->laser0_bot << ". Laser 0 top:" << this->laser0_top);
 		move();
 	}
 
 	void laser1Handler(const sensor_msgs::LaserScan& msg) {
-		laserParser(msg, this->laser1_min, this->laser1_max);
-		ROS_INFO_STREAM("Laser 1 min: " << this->laser1_min << ". Laser 1 max:" << this->laser1_max);
+		laserParser(msg, this->laser1_bot, this->laser1_top);
+		ROS_INFO_STREAM("Laser 1 bottom: " << this->laser1_bot << ". Laser 1 top:" << this->laser1_top);
 		move();
 	}
 
-	void laserParser(const sensor_msgs::LaserScan& msg, float& min_value, float& max_value) {
-		min_value = FLT_MAX;
-		max_value = 0;
-		float new_value;
-		for (int i = 0; i < msg.ranges.size(); i++) {
-			new_value = msg.ranges[i];
-			if (new_value >= msg.range_min && new_value <= msg.range_max) {
-				if (new_value < min_value) 
-					min_value = new_value;
-				if (new_value > max_value)
-					max_value = new_value;
-			}
-		}
-		if (min_value == FLT_MAX)
-			min_value = 0;
+	void laserParser(const sensor_msgs::LaserScan& msg, float& bot_value, float& top_value) {
+		bot_value = msg.ranges[0];
+		top_value = msg.ranges[msg.ranges.size() - 1];
+		if (bot_value <= msg.range_min || bot_value >= msg.range_max)
+			bot_value = FLT_MAX;
+		if (top_value <= msg.range_min || top_value >= msg.range_max)
+			top_value = FLT_MAX;
 	}
 
 	void move() {
-		if (this->laser0_max == 0 && this->laser1_max == 0)
+		if (this->laser0_top == FLT_MAX && this->laser1_top == FLT_MAX && this->laser0_bot == FLT_MAX && this->laser1_bot == FLT_MAX)
 			randomMove();
 		else
 			wallMove();
@@ -117,13 +118,41 @@ private:
 	}
 
 	void wallMove() {
-		randomMove();
+		// Create the message. 
+		geometry_msgs::Twist out_msg;
+		if (this->laser1_bot >= 0.45 && this->laser1_bot <= 0.55 && this->laser1_top >= 1.75 && this->laser1_top <= 1.85) {
+			// Move forward
+			out_msg.linear.x = 1;
+			out_msg.angular.z = 0;
+			this->pub.publish(out_msg);
+			ROS_INFO_STREAM("Sending forward velocity command to " << this->name << ":" 
+			<< " linear=" << out_msg.linear.x << " angular=" << out_msg.angular.z);
+		}
+		else if (this->laser1_bot >= 0.45 && this->laser1_bot <= 0.55 && this->laser1_top == FLT_MAX) {
+			// Will have to turn right
+			out_msg.linear.x = 1;
+			out_msg.angular.z = 0;
+			this->state = turn_right;
+			this->pub.publish(out_msg);
+			ROS_INFO_STREAM("Sending forward velocity command to " << this->name << ":" 
+			<< " linear=" << out_msg.linear.x << " angular=" << out_msg.angular.z);
+		}
+		else if (this->laser1_bot == FLT_MAX && this->laser1_top == FLT_MAX && this->state == turn_right) {
+			// Turn hard right
+			out_msg.linear.x = 1;
+			out_msg.angular.z = - M_PI / 2;
+			this->state = unknown;
+			this->pub.publish(out_msg);
+			ROS_INFO_STREAM("Sending turn right velocity command to " << this->name << ":" 
+			<< " linear=" << out_msg.linear.x << " angular=" << out_msg.angular.z);
+		}
+		else randomMove();
 	}
 
 };
 
 int main(int argc, char **argv) {
-
+	
 	// Seed the random number generator.
 	srand((unsigned) time(NULL) * getpid());
 
