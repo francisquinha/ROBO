@@ -15,6 +15,10 @@
 
 using namespace std;
 
+const float ERROR = 0.05;
+const float BOTTOM = 0.95;
+const float TOP = 2.3;
+
 class Wall {
 
 public:
@@ -60,7 +64,7 @@ private:
 	float laser1_bot; // Right side laser, bottom value within range
 	float laser0_top; // Left side laser, top value within range
 	float laser1_top; // Right side laser, top value within range
-	enum State {unknown, turn_right};
+	enum State {unknown, forward, turn_right};
 	State state;
 
 	void laser0Handler(const sensor_msgs::LaserScan& msg) {
@@ -85,7 +89,8 @@ private:
 	}
 
 	void move() {
-		if (this->laser0_top == FLT_MAX && this->laser1_top == FLT_MAX && this->laser0_bot == FLT_MAX && this->laser1_bot == FLT_MAX)
+		if (this->laser0_top == FLT_MAX && this->laser1_top == FLT_MAX && this->laser0_bot == FLT_MAX 
+			&& this->laser1_bot == FLT_MAX && this->state == unknown) 
 			randomMove();
 		else
 			wallMove();
@@ -120,15 +125,18 @@ private:
 	void wallMove() {
 		// Create the message. 
 		geometry_msgs::Twist out_msg;
-		if (this->laser1_bot >= 0.45 && this->laser1_bot <= 0.55 && this->laser1_top >= 1.75 && this->laser1_top <= 1.85) {
+		if (this->laser1_bot >= BOTTOM - ERROR && this->laser1_bot <= BOTTOM + ERROR 
+			&& this->laser1_top >= TOP - ERROR && this->laser1_top <= TOP + ERROR) {
 			// Move forward
+			this->state = forward;
 			out_msg.linear.x = 1;
 			out_msg.angular.z = 0;
 			this->pub.publish(out_msg);
 			ROS_INFO_STREAM("Sending forward velocity command to " << this->name << ":" 
 			<< " linear=" << out_msg.linear.x << " angular=" << out_msg.angular.z);
 		}
-		else if (this->laser1_bot >= 0.45 && this->laser1_bot <= 0.55 && this->laser1_top == FLT_MAX) {
+		else if (this->laser1_bot >= BOTTOM - ERROR && this->laser1_bot <= BOTTOM + ERROR 
+			&& this->laser1_top == FLT_MAX) {
 			// Will have to turn right
 			out_msg.linear.x = 1;
 			out_msg.angular.z = 0;
@@ -141,7 +149,6 @@ private:
 			// Turn hard right
 			out_msg.linear.x = 1;
 			out_msg.angular.z = - M_PI / 2;
-			this->state = unknown;
 			this->pub.publish(out_msg);
 			ROS_INFO_STREAM("Sending turn right velocity command to " << this->name << ":" 
 			<< " linear=" << out_msg.linear.x << " angular=" << out_msg.angular.z);
