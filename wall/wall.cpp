@@ -166,7 +166,7 @@ private:
 		}
 		else if (laser_min < DISTANCE - MAX_ERROR) {
 			// Turn hard left if right, hard right if left
-			out_msg.linear.x = 0.5;
+			out_msg.linear.x = 0.1;
 			out_msg.angular.z = signal * M_PI / 4;
 			ROS_INFO_STREAM("HARDLEFT1 HARDRIGHT0");
 		}

@@ -15,5 +15,10 @@
 		pkg="stdr_robot"
 		type="robot_handler"
 		name="robot_handler"
-		args="add $(find wall)/robot.yaml"/>
+		args="add $(find wall)/robot_inD.yaml"/>
+	<node
+		pkg="wall"
+		type="wall"
+		name="wall"
+		args="robot0"/>
 </launch>

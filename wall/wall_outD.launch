@@ -1,0 +1,24 @@
+<launch>
+	<include file="$(find stdr_launchers)/launch/server_no_map.launch"/>
+	<include file="$(find stdr_gui)/launch/stdr_gui.launch"/>
+	<node
+		pkg="rviz"
+		type="rviz"
+		name="rviz"
+		args="-d $(find wall)/config.rviz"/>
+	<node
+		pkg="stdr_server"
+		type="load_map"
+		name="load_map"
+		args="$(find wall)/outD.yaml"/>
+	<node
+		pkg="stdr_robot"
+		type="robot_handler"
+		name="robot_handler"
+		args="add $(find wall)/robot_outD.yaml"/>
+	<node
+		pkg="wall"
+		type="wall"
+		name="wall"
+		args="robot0"/>
+</launch>
