@@ -20,5 +20,5 @@
 		pkg="wall"
 		type="wall"
 		name="wall"
-		args="robot0"/>
+		args="robot0 1"/>
 </launch>

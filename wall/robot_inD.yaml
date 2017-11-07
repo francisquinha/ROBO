@@ -6,8 +6,8 @@ robot:
           points:
             []
     - initial_pose:
-        x: 9
-        y: 9
+        x: 7
+        y: 7
         theta: 0
     - laser:
         laser_specifications:

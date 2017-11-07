@@ -17,14 +17,14 @@ using namespace std;
 
 const float MIN_ERROR = 0.01;
 const float MAX_ERROR = 0.1;
-const float DISTANCE = 1;
 
 class Wall {
 
 public:
-	Wall(string name) {
+	Wall(string name, float distance) {
 
 		this->name = name;
+		this->distance = distance;
 		this->signal = (rand() % 2) * 2 - 1;;
 		this->counter = 0;
 		this->next = (rand() % 10 + 1) * 10;
@@ -59,6 +59,7 @@ private:
 	int counter; // Incremented in each robot movement published message.
 	int next; // When to reset the counter and randomize the signal.
 	string name; // Name of the robot to move.
+	float distance; // Distance to keep from wall.
 	float left; // Left side laser, min value within range
 	float right; // Right side laser, min value within range
 	enum State {random, wall};
@@ -158,31 +159,31 @@ private:
 			ROS_INFO_STREAM("LEFT");
 			signal = -1;			
 		}
-		if (laser_min >= DISTANCE - MIN_ERROR && laser_min <= DISTANCE + MIN_ERROR) {
+		if (laser_min >= this->distance - MIN_ERROR && laser_min <= this->distance + MIN_ERROR) {
 			// Move forward
 			out_msg.linear.x = 1;
 			out_msg.angular.z = 0;
 			ROS_INFO_STREAM("FORWARD");
 		}
-		else if (laser_min < DISTANCE - MAX_ERROR) {
+		else if (laser_min < this->distance - MAX_ERROR) {
 			// Turn hard left if right, hard right if left
 			out_msg.linear.x = 0.1;
 			out_msg.angular.z = signal * M_PI / 4;
 			ROS_INFO_STREAM("HARDLEFT1 HARDRIGHT0");
 		}
-		else if (laser_min < DISTANCE - MIN_ERROR) {
+		else if (laser_min < this->distance - MIN_ERROR) {
 			// Turn left if right, right if left
 			out_msg.linear.x = 1;
 			out_msg.angular.z = signal * M_PI / 8;
 			ROS_INFO_STREAM("LEFT1 RIGHT0");
 		}
-		else if (laser_min > DISTANCE + MAX_ERROR) {
+		else if (laser_min > this->distance + MAX_ERROR) {
 			// Turn hard right if right, hard left if left
 			out_msg.linear.x = 0.5;
 			out_msg.angular.z = - signal * M_PI / 4;
 			ROS_INFO_STREAM("HARDRIGHT1 HARDLEFT0");
 		}
-		else if (laser_min > DISTANCE + MIN_ERROR) {
+		else if (laser_min > this->distance + MIN_ERROR) {
 			// Turn right if right, left if left
 			out_msg.linear.x = 1;
 			out_msg.angular.z = - signal * M_PI / 8;
@@ -211,7 +212,8 @@ int main(int argc, char **argv) {
 
 	// Create an object of the Wall class that will take care of everything.
 	string name(argv[1]);
-	Wall *wall = new Wall(name);
+	float distance = atof(argv[2]);
+	Wall *wall = new Wall(name, distance);
 
 	// Let ROS take over.
 	ros::spin();
