@@ -15,9 +15,9 @@
 
 using namespace std;
 
-const float ERROR = 0.05;
-const float BOTTOM = 0.95;
-const float TOP = 2.3;
+const float MIN_ERROR = 0.01;
+const float MAX_ERROR = 0.1;
+const float DISTANCE = 1;
 
 class Wall {
 
@@ -29,20 +29,19 @@ public:
 		this->counter = 0;
 		this->next = (rand() % 10 + 1) * 10;
 
-		this->laser0_bot = FLT_MAX;
-		this->laser1_bot = FLT_MAX;
-		this->laser0_top = FLT_MAX;
-		this->laser1_top = FLT_MAX;
+		this->left = FLT_MAX;
+		this->right = FLT_MAX;
 
-		this->state = unknown;
+		this->state = random;
+		this->laser = unknown;
 
 		// Initiate the publisher.
 		pub = nh.advertise<geometry_msgs::Twist>(name + "/cmd_vel", 1000);
 
 		// Initiate the subscribers.
 		// We subscribe to the robots lasers to detect walls.
-		sub0 = nh.subscribe(name + "/laser0", 1000, &Wall::laser0Handler, this);
-		sub1 = nh.subscribe(name + "/laser1", 1000, &Wall::laser1Handler, this);
+		sub0 = nh.subscribe(name + "/left", 1000, &Wall::leftHandler, this);
+		sub1 = nh.subscribe(name + "/right", 1000, &Wall::rightHandler, this);
 
 /*		ros::Rate rate(2);
 		while(ros::ok()) {
@@ -60,37 +59,37 @@ private:
 	int counter; // Incremented in each robot movement published message.
 	int next; // When to reset the counter and randomize the signal.
 	string name; // Name of the robot to move.
-	float laser0_bot; // Left side laser, bottom value within range
-	float laser1_bot; // Right side laser, bottom value within range
-	float laser0_top; // Left side laser, top value within range
-	float laser1_top; // Right side laser, top value within range
-	enum State {unknown, forward, turn_right};
+	float left; // Left side laser, min value within range
+	float right; // Right side laser, min value within range
+	enum State {random, wall};
 	State state;
+	enum Laser {unknown, left_laser, right_laser};
+	Laser laser;
 
-	void laser0Handler(const sensor_msgs::LaserScan& msg) {
-		laserParser(msg, this->laser0_bot, this->laser0_top);
-		ROS_INFO_STREAM("Laser 0 bottom: " << this->laser0_bot << ". Laser 0 top:" << this->laser0_top);
+	void leftHandler(const sensor_msgs::LaserScan& msg) {
+		laserParser(msg, this->left);
+		ROS_INFO_STREAM("Left laser: " << this->left);
 		move();
 	}
 
-	void laser1Handler(const sensor_msgs::LaserScan& msg) {
-		laserParser(msg, this->laser1_bot, this->laser1_top);
-		ROS_INFO_STREAM("Laser 1 bottom: " << this->laser1_bot << ". Laser 1 top:" << this->laser1_top);
+	void rightHandler(const sensor_msgs::LaserScan& msg) {
+		laserParser(msg, this->right);
+		ROS_INFO_STREAM("Right laser: " << this->right );
 		move();
 	}
 
-	void laserParser(const sensor_msgs::LaserScan& msg, float& bot_value, float& top_value) {
-		bot_value = msg.ranges[0];
-		top_value = msg.ranges[msg.ranges.size() - 1];
-		if (bot_value <= msg.range_min || bot_value >= msg.range_max)
-			bot_value = FLT_MAX;
-		if (top_value <= msg.range_min || top_value >= msg.range_max)
-			top_value = FLT_MAX;
+	void laserParser(const sensor_msgs::LaserScan& msg, float& value) {
+		value = FLT_MAX;
+		float new_value;
+		for (int i = 0; i < msg.ranges.size(); i++) {
+			new_value = msg.ranges[i];
+			if (new_value >= msg.range_min && new_value <= msg.range_max && new_value < value)
+				value = new_value;
+		}
 	}
 
 	void move() {
-		if (this->laser0_top == FLT_MAX && this->laser1_top == FLT_MAX && this->laser0_bot == FLT_MAX 
-			&& this->laser1_bot == FLT_MAX && this->state == unknown) 
+		if (this->left == FLT_MAX && this->right == FLT_MAX && this->state == random) 
 			randomMove();
 		else
 			wallMove();
@@ -118,42 +117,86 @@ private:
 		this->pub.publish(out_msg);
 
 		// Send a message to rosout with the details.
-		ROS_INFO_STREAM("Sending random velocity command to " << this->name << ":" 
-			<< " linear=" << out_msg.linear.x << " angular=" << out_msg.angular.z);
+		ROS_INFO_STREAM("Random velocity: "	<< " linear=" << out_msg.linear.x << " angular=" << out_msg.angular.z);
 	}
 
 	void wallMove() {
+		this->state = wall;
 		// Create the message. 
 		geometry_msgs::Twist out_msg;
-		if (this->laser1_bot >= BOTTOM - ERROR && this->laser1_bot <= BOTTOM + ERROR 
-			&& this->laser1_top >= TOP - ERROR && this->laser1_top <= TOP + ERROR) {
+		float laser_min;
+		int signal;
+		if (this->left == FLT_MAX && this->right < FLT_MAX) {
+			laser_min = this->right;
+			this->laser = right_laser;
+			ROS_INFO_STREAM("RIGHT");
+			signal = 1;
+		}
+		else if (this->right == FLT_MAX && this->left < FLT_MAX) {
+			laser_min = this->left;
+			this->laser = left_laser;
+			ROS_INFO_STREAM("LEFT");
+			signal = -1;
+		}
+		else if (this->laser == right_laser) {
+			laser_min = this->right;
+			signal = 1;						
+		}
+		else if (this->laser == left_laser) {
+			laser_min = this->left;
+			signal = -1;						
+		}
+		else if (this->right < this->left) {
+			laser_min = this->right;
+			this->laser = right_laser;
+			ROS_INFO_STREAM("RIGHT");
+			signal = 1;
+		}
+		else {
+			laser_min = this->left;
+			this->laser = left_laser;
+			ROS_INFO_STREAM("LEFT");
+			signal = -1;			
+		}
+		if (laser_min >= DISTANCE - MIN_ERROR && laser_min <= DISTANCE + MIN_ERROR) {
 			// Move forward
-			this->state = forward;
 			out_msg.linear.x = 1;
 			out_msg.angular.z = 0;
-			this->pub.publish(out_msg);
-			ROS_INFO_STREAM("Sending forward velocity command to " << this->name << ":" 
-			<< " linear=" << out_msg.linear.x << " angular=" << out_msg.angular.z);
+			ROS_INFO_STREAM("FORWARD");
 		}
-		else if (this->laser1_bot >= BOTTOM - ERROR && this->laser1_bot <= BOTTOM + ERROR 
-			&& this->laser1_top == FLT_MAX) {
-			// Will have to turn right
+		else if (laser_min < DISTANCE - MAX_ERROR) {
+			// Turn hard left if right, hard right if left
+			out_msg.linear.x = 0.5;
+			out_msg.angular.z = signal * M_PI / 4;
+			ROS_INFO_STREAM("HARDLEFT1 HARDRIGHT0");
+		}
+		else if (laser_min < DISTANCE - MIN_ERROR) {
+			// Turn left if right, right if left
 			out_msg.linear.x = 1;
+			out_msg.angular.z = signal * M_PI / 8;
+			ROS_INFO_STREAM("LEFT1 RIGHT0");
+		}
+		else if (laser_min > DISTANCE + MAX_ERROR) {
+			// Turn hard right if right, hard left if left
+			out_msg.linear.x = 0.5;
+			out_msg.angular.z = - signal * M_PI / 4;
+			ROS_INFO_STREAM("HARDRIGHT1 HARDLEFT0");
+		}
+		else if (laser_min > DISTANCE + MIN_ERROR) {
+			// Turn right if right, left if left
+			out_msg.linear.x = 1;
+			out_msg.angular.z = - signal * M_PI / 8;
+			ROS_INFO_STREAM("RIGHT1 LEFT0");
+		}
+		else {
+			// Do nothing and go back to random
+			out_msg.linear.x = 0;
 			out_msg.angular.z = 0;
-			this->state = turn_right;
-			this->pub.publish(out_msg);
-			ROS_INFO_STREAM("Sending forward velocity command to " << this->name << ":" 
-			<< " linear=" << out_msg.linear.x << " angular=" << out_msg.angular.z);
+			this->state = random;
+			this->laser = unknown;
 		}
-		else if (this->laser1_bot == FLT_MAX && this->laser1_top == FLT_MAX && this->state == turn_right) {
-			// Turn hard right
-			out_msg.linear.x = 1;
-			out_msg.angular.z = - M_PI / 2;
-			this->pub.publish(out_msg);
-			ROS_INFO_STREAM("Sending turn right velocity command to " << this->name << ":" 
-			<< " linear=" << out_msg.linear.x << " angular=" << out_msg.angular.z);
-		}
-		else randomMove();
+		this->pub.publish(out_msg);
+		ROS_INFO_STREAM("Velocity: "	<< " linear=" << out_msg.linear.x << " angular=" << out_msg.angular.z);
 	}
 
 };
