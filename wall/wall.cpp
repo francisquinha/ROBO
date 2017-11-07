@@ -67,18 +67,21 @@ private:
 	enum Laser {unknown, left_laser, right_laser};
 	Laser laser;
 
+	// Left laser handler: saves the left laser minimum value to this->left
 	void leftHandler(const sensor_msgs::LaserScan& msg) {
 		laserParser(msg, this->left);
 		ROS_INFO_STREAM("Left laser: " << this->left);
 		move();
 	}
 
+	// Right laser handler: saves the right laser minimum value to this->right
 	void rightHandler(const sensor_msgs::LaserScan& msg) {
 		laserParser(msg, this->right);
 		ROS_INFO_STREAM("Right laser: " << this->right );
 		move();
 	}
 
+	// Laser parser: finds and saves the laser minimum value within the range
 	void laserParser(const sensor_msgs::LaserScan& msg, float& value) {
 		value = FLT_MAX;
 		float new_value;
@@ -89,13 +92,19 @@ private:
 		}
 	}
 
+	// If none of the lasers sees anything tells the robot to move randomly, else tells it to follow the wall
 	void move() {
+
+		// See nothing and haven't seen anything before, move randomly
 		if (this->left == FLT_MAX && this->right == FLT_MAX && this->state == random) 
 			randomMove();
+
+		// See wall or saw it recently, follow it
 		else
 			wallMove();
 	}
 
+	// Sends a random movement message to the robot
 	void randomMove() {
 
 		this->counter++;	
@@ -121,76 +130,60 @@ private:
 		ROS_INFO_STREAM("Random velocity: "	<< " linear=" << out_msg.linear.x << " angular=" << out_msg.angular.z);
 	}
 
+	// Sends a wall following movement message to the robot
 	void wallMove() {
+
+		// update the robot state
 		this->state = wall;
+
 		// Create the message. 
 		geometry_msgs::Twist out_msg;
+
+		// left or right laser value
 		float laser_min;
+
+		// signal: -1 if left laser, 1 if right laser; so that the right turns are made
 		int signal;
-		if (this->left == FLT_MAX && this->right < FLT_MAX) {
-			laser_min = this->right;
-			this->laser = right_laser;
-			ROS_INFO_STREAM("RIGHT");
-			signal = 1;
-		}
-		else if (this->right == FLT_MAX && this->left < FLT_MAX) {
-			laser_min = this->left;
-			this->laser = left_laser;
-			ROS_INFO_STREAM("LEFT");
-			signal = -1;
-		}
-		else if (this->laser == right_laser) {
-			laser_min = this->right;
-			signal = 1;						
-		}
-		else if (this->laser == left_laser) {
-			laser_min = this->left;
-			signal = -1;						
-		}
-		else if (this->right < this->left) {
-			laser_min = this->right;
-			this->laser = right_laser;
-			ROS_INFO_STREAM("RIGHT");
-			signal = 1;
-		}
-		else {
-			laser_min = this->left;
-			this->laser = left_laser;
-			ROS_INFO_STREAM("LEFT");
-			signal = -1;			
-		}
+
+		// get the laser to use and the corresponding signal
+		getLaser(laser_min, signal);
+
+		// determine what to do according to the laser value
+		// if the laser distance is close to the intended wall distance, go forward
 		if (laser_min >= this->distance - MIN_ERROR && laser_min <= this->distance + MIN_ERROR) {
-			// Move forward
 			out_msg.linear.x = 1;
 			out_msg.angular.z = 0;
-			ROS_INFO_STREAM("FORWARD");
 		}
+		// if the laser distance is a lot smaller than the intended wall distance, turn hard
+		// left if the right laser is being used, right if the left laser is being used
+		// in order to get away from the wall
 		else if (laser_min < this->distance - MAX_ERROR) {
-			// Turn hard left if right, hard right if left
 			out_msg.linear.x = 0.1;
 			out_msg.angular.z = signal * M_PI / 4;
-			ROS_INFO_STREAM("HARDLEFT1 HARDRIGHT0");
 		}
+		// if the laser distance is smaller than the intended wall distance, turn
+		// left if the right laser is being used, right if the left laser is being used
+		// in order to get away from the wall
 		else if (laser_min < this->distance - MIN_ERROR) {
-			// Turn left if right, right if left
 			out_msg.linear.x = 1;
 			out_msg.angular.z = signal * M_PI / 8;
-			ROS_INFO_STREAM("LEFT1 RIGHT0");
 		}
+		// if the laser distance is a lot larger than the intended wall distance, turn hard
+		// right if the right laser is being used, left if the left laser is being used
+		// in order to get closer to the wall
 		else if (laser_min > this->distance + MAX_ERROR) {
-			// Turn hard right if right, hard left if left
 			out_msg.linear.x = 0.5;
 			out_msg.angular.z = - signal * M_PI / 4;
-			ROS_INFO_STREAM("HARDRIGHT1 HARDLEFT0");
 		}
+		// if the laser distance is larger than the intended wall distance, turn
+		// right if the right laser is being used, left if the left laser is being used
+		// in order to get closer to the wall
 		else if (laser_min > this->distance + MIN_ERROR) {
-			// Turn right if right, left if left
 			out_msg.linear.x = 1;
 			out_msg.angular.z = - signal * M_PI / 8;
-			ROS_INFO_STREAM("RIGHT1 LEFT0");
 		}
+		// this should not happen, but just in case, do nothing and go back to random movements
 		else {
-			// Do nothing and go back to random
 			out_msg.linear.x = 0;
 			out_msg.angular.z = 0;
 			this->state = random;
@@ -198,6 +191,44 @@ private:
 		}
 		this->pub.publish(out_msg);
 		ROS_INFO_STREAM("Velocity: "	<< " linear=" << out_msg.linear.x << " angular=" << out_msg.angular.z);
+	}
+
+	// Determines which laser to use, the right or the left, and the corresponding turn signal
+	void getLaser(float& laser_min, int& signal) {
+		// if only right laser sees wall, use right laser
+		if (this->left == FLT_MAX && this->right < FLT_MAX) {
+			laser_min = this->right;
+			this->laser = right_laser;
+			signal = 1;
+		}
+		// if only left laser sees wall, use left laser
+		else if (this->right == FLT_MAX && this->left < FLT_MAX) {
+			laser_min = this->left;
+			this->laser = left_laser;
+			signal = -1;
+		}
+		// if right laser was previously chosen, keep using it
+		else if (this->laser == right_laser) {
+			laser_min = this->right;
+			signal = 1;						
+		}
+		// if left laser was previously chosen, keep using it
+		else if (this->laser == left_laser) {
+			laser_min = this->left;
+			signal = -1;						
+		}
+		// if no laser was previously chosen and right laser is closer, use right laser
+		else if (this->right < this->left) {
+			laser_min = this->right;
+			this->laser = right_laser;
+			signal = 1;
+		}
+		// if no laser was previously chosen and right laser is not closer, use left laser
+		else {
+			laser_min = this->left;
+			this->laser = left_laser;
+			signal = -1;			
+		}
 	}
 
 };
