@@ -37,7 +37,7 @@ The keywords go here.
 \section{Introduction}
 The most basic types of robotics systems are purely reactive. These systems don’t have neither the ability to form memories nor to use past experiences to inform current decisions. Since they are fast and rely only on the current sensor readings instead of an accurate map, the use of which requires very accurate localization capabilities, reactive navigation approaches are often used for robot navigation. However, reactive navigation does not plan ahead and is therefore susceptible to local minima. 
 
-In this project we developed a stable wall follower behavior for a simple reactive robot. The design, implementation and testing of our solution, were made with the support of the \textit{ROS framework} and the \textit{STDR Simulator} package. The robot is equipped with two sensors that allow him to sense the world around and act according to the information he receives from them. 
+In this project we developed a stable wall follower behaviour for a simple reactive robot. The design, implementation and testing of our solution, were made with the support of the \textit{ROS framework} and the \textit{STDR Simulator} package. The robot is equipped with two sensors that allow him to sense the world around and act according to the information he receives from them. 
 
 In the following sections we will discuss the architecture of our design, the results and limitations of our approach and some last remarks.
 
@@ -47,6 +47,21 @@ In the following sections we will discuss the architecture of our design, the re
 % ARCHITECTURE %
 %%%%%%%%%%%%%%%%
 \section{Architecture}
+\subsection{The Robot Design}
+
+The project makes use of the \textit{ROS} framework and the \textit{STDR Simulator} package in the design of the robot and implementation of its behaviour.
+
+The robot is disk-shaped, with a radius of 0.5cm and with an ideal skid steer kinematic, allowing for 360º turns. It’s equipped with two laser sensors to detect obstacles, each one composed of 200 rays within an angle of 45º. Each sensor is rotated. The sensors have a maximum range of 3m and a minimum range of 0.1. Additionally, the sensors are updated with a frequency of 10Hz. A schematic of the robot is presented in the image \ref{fig:robot}
+
+
+   \begin{figure}[thpb]
+      \centering
+      \framebox{\parbox{3in}{\includegraphics[scale=0.2]{img/robo.jpg}}}
+      \caption{Schematic of the disk-shaped robot.}
+      \label{fig:robot}
+   \end{figure}
+   
+
 
 %%%%%%%%%%%
 % RESULTS %
