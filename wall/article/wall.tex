@@ -58,6 +58,8 @@ In the following sections we will discuss the architecture of our design, the re
 %%%%%%%%%%%%%%%
 \section{Limitations}
 
+Nothing is perfect and our wall following robot is not an exception. Most of the limitations we detected in our robot are due to the simple ideas we used to make it work. However, we still believe that the simplicity of the code is worth the restrictions it creates.
+
 \subsection{Map delimiting walls}
 
 In order to keep the robot from trying to leave the map, we had to create squared walls around the map. These walls are not the ones the robot is supposed to find and follow, but if it does find these walls it will follow them forever.
@@ -93,6 +95,21 @@ If the initial position of the robot is on top or too close to a wall, it will n
 When the robot is between two walls, like when it is between the two D's, it does not follow both, that is it does not try to keep itself in the middle of both walls. We are not sure if that was the intention of the two D's assignment, but such behavior does make sense to us. The problem with trying to stay in the middle of two walls is that such behavior is different from that of trying to follow a wall at a given distance. 
 
 There are two reasons why the robot may receive data from both lasers: either each laser detects a different wall, that is, the robot is between two walls; or both lasers detect the same wall, which may happen because the robot is facing the wall or because it is at a corner. Our way of dealing with data from both lasers is to use the laser that is closest to a wall. Unless the robot has already chosen a laser, in which case it should stick to it. This way, we avoid running into a wall because we where paying attention to the wrong laser. We also avoid turning around in an inner corner, because suddenly the other laser is closer to the wall. Plus, when the robot is facing a wall, it will eventually chose one laser, which means it will chose a direction in which to follow the wall. Unfortunately, it also means that when it is between two walls, the robot will pick the closest wall and follow it. To change this behavior, we need to be able to distinguish between the two scenarios above, and honestly we did not think further about this.
+
+\subsection{Facing a wall}
+
+When the robot first detects and approaches a wall, most often it will start to face that wall. Then as it goes towards the wall, because it is still further away from the wall then the desired distance, it does so in a peculiar way. Instead of going forward, it turns considerably left and right while approaching the wall.
+
+We believe this behavior is explained by the way the robot chooses which laser to use. Suppose it chooses the left laser, then, since it is too far away from the wall, it quickly turns left, effectively making the left laser loose sight of the wall. Hence, it starts using the right laser, quickly turning right to get closer to the wall and possibly making the right laser loose sight of the wall. This may happen a few times, but eventually the robot is close enough that when turning, the chosen laser will not loose sight of the wall, leading to a normal behavior from then on.
+
+We tried to fix this, making to robot stick to the first laser it chooses. But then it just started going around, because it had lost sight of the wall. So, although it is a strange way of going towards the wall, we kept it, because it works.
+
+\subsection{Following a straight wall}
+
+Sometimes, when the robot is following a straight wall, it will not go strictly forward, but very slightly deviate left and right. This is due to the noise from the lasers, and the error margin we use. We use a 0.01 error margin to quickly fix small deviations from the wall by turning $Pi/8$. If the noise is greater than 0.01, the robot will think it is too close or too far from the wall and turn a bit.
+
+The reason for the error margin of 0.01 is because it makes the robot behave better when the wall does turn, that is, the robot follows the wall keeping a distance very close to the desired one. This happens even in sharp outer corners, that is when the robot needs to turn $3Pi/2$.
+
 
 %%%%%%%%%%%%%%%
 % CONCLUSION %
