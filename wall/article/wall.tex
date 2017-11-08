@@ -47,6 +47,19 @@ In the following sections we will discuss the architecture of our design, the re
 % ARCHITECTURE %
 %%%%%%%%%%%%%%%%
 \section{Architecture}
+\subsection{The Robot Design}
+
+The project makes use of the \textit{ROS} framework and the \textit{STDR Simulator} package in the design of the robot and implementation of its behaviour.
+
+The robot is disk-shaped, with a radius of 0.5cm and with an ideal skid steer kinematic, allowing for 360º turns. It’s equipped with two laser sensors to detect obstacles, each one composed of 200 rays within an angle of 45º. Each sensor is rotated. The sensors have a maximum range of 3m and a minimum range of 0.1. Additionally, the sensors are updated with a frequency of 10Hz. A schematic of the robot is presented in the image \ref{fig:robot}
+
+
+   \begin{figure}[thpb]
+      \centering
+      \framebox{\parbox{3in}{\includegraphics[scale=0.2]{img/robo.jpg}}}
+      \caption{Schematic of the disk-shaped robot.}
+      \label{fig:robot}
+   \end{figure}
 
 %%%%%%%%%%%
 % RESULTS %
@@ -128,5 +141,4 @@ The conclusion goes here.
 \bibliography{IEEEabrv,wall_bib}
 
 \end{document}
-
 
