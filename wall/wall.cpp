@@ -25,7 +25,7 @@ public:
 
 		this->name = name;
 		this->distance = distance;
-		this->signal = (rand() % 2) * 2 - 1;;
+		this->random_signal = (rand() % 2) * 2 - 1;;
 		this->counter = 0;
 		this->next = (rand() % 10 + 1) * 10;
 
@@ -42,12 +42,15 @@ public:
 		// We subscribe to the robots lasers to detect walls.
 		sub0 = nh.subscribe(name + "/left", 1000, &Wall::leftHandler, this);
 		sub1 = nh.subscribe(name + "/right", 1000, &Wall::rightHandler, this);
-
-/*		ros::Rate rate(2);
+		
+		// Let ROS take over.
+		ros::Rate rate(10);
 		while(ros::ok()) {
 			move();
+	    	ros::spinOnce();
 			rate.sleep();
-		}*/
+		}
+
 	}
 
 private:
@@ -55,7 +58,7 @@ private:
 	ros::Publisher pub;
 	ros::Subscriber sub0;
 	ros::Subscriber sub1;
-	int signal; // Determines whether the robot rotates counterclockwise or clockwise.
+	int random_signal; // Determines whether the robot rotates counterclockwise or clockwise.
 	int counter; // Incremented in each robot movement published message.
 	int next; // When to reset the counter and randomize the signal.
 	string name; // Name of the robot to move.
@@ -63,22 +66,20 @@ private:
 	float left; // Left side laser, min value within range
 	float right; // Right side laser, min value within range
 	enum State {random, wall};
-	State state;
+	State state; // Robot state random before it finds a wall, wall after that
 	enum Laser {unknown, left_laser, right_laser};
-	Laser laser;
+	Laser laser; // Laser the robot is using
 
 	// Left laser handler: saves the left laser minimum value to this->left
 	void leftHandler(const sensor_msgs::LaserScan& msg) {
 		laserParser(msg, this->left);
 		ROS_INFO_STREAM("Left laser: " << this->left);
-		move();
 	}
 
 	// Right laser handler: saves the right laser minimum value to this->right
 	void rightHandler(const sensor_msgs::LaserScan& msg) {
 		laserParser(msg, this->right);
 		ROS_INFO_STREAM("Right laser: " << this->right );
-		move();
 	}
 
 	// Laser parser: finds and saves the laser minimum value within the range
@@ -105,7 +106,7 @@ private:
 	}
 
 	// Sends a random movement message to the robot
-	void randomMove() {
+	void randomMoveOld() {
 
 		this->counter++;	
 
@@ -113,15 +114,31 @@ private:
 		// and randomize the next check.
 		if (this->counter == this->next) {
 			this->counter = 0;
-			this->signal = (rand() % 2) * 2 - 1;
-			this->next = (rand() % 10 + 1) * 10;
+			this->random_signal = (rand() % 2) * 2 - 1;
+			this->next = (rand() % 10 + 1) * 20;
 		}
 
 		// Create and fill in the message. 
 		// The other four fields, which are ignore by the robot, default to 0.
 		geometry_msgs::Twist out_msg;
-		out_msg.linear.x = double(rand())/double(RAND_MAX);
-		out_msg.angular.z = this->signal * double(rand())/double(RAND_MAX);
+		out_msg.linear.x = double(rand()) / double(RAND_MAX);
+		out_msg.angular.z = this->random_signal * double(rand()) / double(RAND_MAX);
+
+		// Publish the message.
+		this->pub.publish(out_msg);
+
+		// Send a message to rosout with the details.
+		ROS_INFO_STREAM("Random velocity: "	<< " linear=" << out_msg.linear.x << " angular=" << out_msg.angular.z);
+	}
+
+	// Sends a random movement message to the robot
+	void randomMove() {
+
+		// Create and fill in the message. 
+		// The other four fields, which are ignore by the robot, default to 0.
+		geometry_msgs::Twist out_msg;
+		out_msg.linear.x = double(rand()) / double(RAND_MAX);
+		out_msg.angular.z = 2 * double(rand()) / double(RAND_MAX) - 1;;
 
 		// Publish the message.
 		this->pub.publish(out_msg);
@@ -166,7 +183,7 @@ private:
 		// in order to get away from the wall
 		else if (laser_min < this->distance - MIN_ERROR) {
 			out_msg.linear.x = 1;
-			out_msg.angular.z = signal * M_PI / 8;
+			out_msg.angular.z = signal * M_PI / 16;
 		}
 		// if the laser distance is a lot larger than the intended wall distance, turn hard
 		// right if the right laser is being used, left if the left laser is being used
@@ -180,7 +197,7 @@ private:
 		// in order to get closer to the wall
 		else if (laser_min > this->distance + MIN_ERROR) {
 			out_msg.linear.x = 1;
-			out_msg.angular.z = - signal * M_PI / 8;
+			out_msg.angular.z = - signal * M_PI / 16;
 		}
 		// this should not happen, but just in case, do nothing and go back to random movements
 		else {
@@ -245,8 +262,7 @@ int main(int argc, char **argv) {
 	string name(argv[1]);
 	float distance = atof(argv[2]);
 	Wall *wall = new Wall(name, distance);
-
-	// Let ROS take over.
-	ros::spin();
+	
+	return 0;
 
 }
