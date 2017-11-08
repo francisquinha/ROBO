@@ -57,9 +57,33 @@ The robot is disk-shaped, with a radius of 0.5cm and with an ideal skid steer ki
    \begin{figure}[thpb]
       \centering
       \framebox{\parbox{3in}{\includegraphics[scale=0.2]{img/robo.jpg}}}
-      \caption{Schematic of the disk-shaped robot.}
+      \caption{Schematic of the disk-shaped robot}
       \label{fig:robot}
    \end{figure}
+   
+   
+\subsection{Behaviour Architecture}
+
+The robot follows a simple subsumption based architecture.
+
+   \begin{figure}[thpb]
+      \centering
+      \includegraphics[scale=0.265]{img/architecture.jpg}
+      \caption{Subsumption architecture}
+      \label{fig:robot}
+   \end{figure}
+
+The robot will begin with an initial movement characterized by a random linear speed $\nu$ and a random angular speed $\omega$. He will maintain this random movement up until the point in time he first discovers a wall. Upon the detection of an obstacle, the robot will follow along its walls indefinitely.
+
+   \begin{figure}[thpb]
+      \centering
+     \includegraphics[scale=0.3]{img/behaviour.jpg}
+      \caption{Robot behaviour following a wall}
+      \label{fig:robot}
+   \end{figure}
+
+\subsection{Algorithm}
+Upon discovering an obstacle the goal of the robot is to follow an imaginary line at a distance $D_i$ from the wall. 
 
 %%%%%%%%%%%
 % RESULTS %
@@ -141,4 +165,3 @@ The conclusion goes here.
 \bibliography{IEEEabrv,wall_bib}
 
 \end{document}
-
