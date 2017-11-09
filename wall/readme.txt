@@ -4,9 +4,9 @@
 
 Project developed for the ROBO curricular unit, MIEIC, FEUP.
 
-Wall following eactive robot using ROS and STDR_Simulator.
+Wall following reactive robot using ROS and STDR_Simulator.
 
-### Installation intructions:
+### Installation instructions:
 
 1. Configure a catkin workspace, let's call it catkin_ws
 2. Copy the wall folder to catkin_ws/src
