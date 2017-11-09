@@ -35,11 +35,11 @@ The keywords go here.
 % INTRODUCTION %
 %%%%%%%%%%%%%%%%
 \section{Introduction}
-The most basic types of robotics systems are purely reactive. These systems don’t have neither the ability to form memories nor to use past experiences to inform current decisions. Since they are fast and rely only on the current sensor readings instead of an accurate map, the use of which requires very accurate localization capabilities, reactive navigation approaches are often used for robot navigation. However, reactive navigation does not plan ahead and is therefore susceptible to local minima. 
+The most basic types of robotic systems are purely reactive. These systems do not have neither the ability to form memories, nor to use past experiences to inform current decisions. Since they are fast and rely only on the current sensor readings, instead of an accurate map, the use of which requires very accurate localization capabilities, reactive approaches are often used for robot navigation. However, reactive navigation does not plan ahead and is therefore susceptible to local minima. 
 
-In this project we developed a stable wall follower behavior for a simple reactive robot. The design, implementation and testing of our solution, were made with the support of the \textit{ROS framework} and the \textit{STDR Simulator} package. The robot is equipped with two sensors that allow him to sense the world around and act according to the information he receives from them. 
+In this project we developed a stable wall follower behavior for a simple reactive robot. The design, implementation and testing of our solution, were made with the support of the \textit{ROS} framework and the \textit{STDR Simulator} package. The robot is equipped with two sensors, that allow it to sense the world around and act according to their information. 
 
-In the following sections we will discuss the architecture of our design, the results and limitations of our approach and some last remarks.
+In the following sections we will describe the architecture of our design, discuss the results and limitations of our approach and present some last remarks.
 
 \cite{example}
 
@@ -49,9 +49,9 @@ In the following sections we will discuss the architecture of our design, the re
 \section{Architecture}
 \subsection{The Robot Design}
 
-The project makes use of the \textit{ROS} framework and the \textit{STDR Simulator} package in the design of the robot and implementation of its behaviour.
+The project makes use of the \textit{ROS} framework and the \textit{STDR Simulator} package in the design of the robot and implementation of its behavior.
 
-The robot is disk-shaped, with a radius of 0.5cm and with an ideal skid steer kinematic, allowing for 360º turns. It’s equipped with two laser sensors to detect obstacles, each one composed of 200 rays within an angle of 45º. Each sensor is rotated. The sensors have a maximum range of 3m and a minimum range of 0.1. Additionally, the sensors are updated with a frequency of 10Hz. A schematic of the robot is presented in the image \ref{fig:robot}
+The robot is disk-shaped, with a radius of 0.5cm and with an ideal skid steer kinematic, allowing for $360^{\circ}$ turns. It’s equipped with two laser sensors to detect obstacles, each one composed of 200 rays within an angle of $36^{\circ}$. Each sensor is rotated. The sensors have a maximum range of 3cm and a minimum range of 0.1cm. Additionally, the sensors are updated with a frequency of 10Hz. A schematic of the robot is presented in the figure \ref{fig:robot}.
 
 
    \begin{figure}[thpb]
@@ -73,11 +73,11 @@ The robot follows a simple subsumption based architecture.
       \label{fig:architecture}
    \end{figure}
 
-The architecture has two different states, as shown in the figure \ref{fig:architecture}: \textit{random movement} and \textit{follow wall}. The robot will begin with an initial movement characterized by a random linear speed $\nu$ and a random angular speed $\omega$. He will maintain this random movement up until the point in time he first discovers a wall. Upon the detection of an obstacle, the robot will follow along its walls indefinitely. The implemented algorithms that dictate the two states are described in the following section. 
+The architecture has two different states, as shown in the figure \ref{fig:architecture}: \textit{random movement} and \textit{follow wall}. The robot will begin with an initial movement characterized by a random linear speed $\nu$ and a random angular speed $\omega$. It will maintain this random movement up until it first discovers a wall. When it detects an obstacle, the robot will follow along its walls indefinitely. The implemented algorithms that dictate the two states are described in the following section. 
 
 
 \subsection{Algorithms}
-\subsection{Initial random movement}
+\subsection{Initial random movement}\label{subsec:initial}
 
 Until it finds the wall, the robot moves randomly, that is, at each step it chooses random linear and angular velocities. Depending on the initial distance of the robot to the nearest wall and its orientation, this random search may take a long time. 
 
@@ -95,7 +95,7 @@ Upon discovering an obstacle the goal of the robot is to follow an imaginary lin
       \label{fig:wall}
    \end{figure}
 
-To do so, the robot uses the readings from the lasers to correct its trajectory. Knowing which of the sensors is coming the measurements, the robot knows if the wall is on is right or left side and can act accordingly. If the robot is coming to close to the wall, the angular velocity takes the current symmetric value. The same happens if the robot begins to stray too far from the wall. In both cases, the linear velocity is maintained. This behaviour reflects in a trajectory like the one in figure \ref{fig:wall}. When the robot loses the readings from the laser, we know we are present in a corner of the map. In order to keep following the wall, we have to perform what we call a "hard turn". In this case, the robot duplicates its standard angular velocity and reduces to 10\% of it's normal linear speed.
+To do so, the robot uses the readings from the lasers to correct its trajectory. Knowing from which of the sensors is coming the measurements, the robot knows if the wall is on its right or left side and can act accordingly. If the robot is coming to close to the wall, the angular velocity takes the current symmetric value. The same happens if the robot begins to stray too far from the wall. In both cases, the linear velocity is maintained. This behavior reflects in a trajectory like the one in figure \ref{fig:wall}. When the robot loses the readings from the laser, we know we are present in a corner of the map. In order to keep following the wall, we have to perform what we call a ``hard turn''. In this case, the robot duplicates its standard angular velocity and reduces to 10\% of its normal linear speed.
 
 %%%%%%%%%%%
 % RESULTS %
@@ -117,15 +117,6 @@ Of course this only happens for the small D, whose walls the robot is supposed t
 
 For the small D, we defined an initial position for the robot that is closer to the D than to the outside wall, although it sees neither of these walls. Thus, even though the initial movement of the robot will be random, it is more likely to find the small D wall and follow it. In case it finds the outside wall, the program should be stopped, but if it is not, the robot will still follow the outside wall without any problem.
 
-
-\subsection{Initial random movement}
-
-Until it finds the wall, the robot moves randomly, that is, at each step it chooses random linear and angular velocities. Depending on the initial distance of the robot to the nearest wall and its orientation, this random search may take a long time. 
-
-We believe this wall finding time could be improved by making it more likely for the robot to move forward than for it to turn. This is clear if the robot is inside the wall it is suppose to find, like when it is inside the large D or between both D's. But in the case where the robot is outside the small D, going forward with higher probability might increase the likelihood of the robot finding the square walls delimiting the map, before it found the D walls.
-
-Since the map delimiting wall is only there to stop the robot from trying to leave the map and not to be followed, we kept the robot moving randomly. In any case, the only downside is longer waiting time.
-
 \subsection{Desired wall distance}
 
 The distance the robot tries to keep from the wall can be configured by the user. If the chosen distance is too small, the robot may not be able to turn on sharp corners. This happens because while turning the robot gets too close to the wall and perceives that it has run into it, which makes it stop altogether.
@@ -142,31 +133,31 @@ If the initial position of the robot is on top or too close to a wall, it will n
 
 \subsection{Following two walls}
 
-When the robot is between two walls, like when it is between the two D's, it does not follow both, that is it does not try to keep itself in the middle of both walls. We are not sure if that was the intention of the two D's assignment, but such behaviour does make sense to us. The problem with trying to stay in the middle of two walls is that such behaviour is different from that of trying to follow a wall at a given distance. 
+When the robot is between two walls, like when it is between the two D's, it does not follow both, that is it does not try to keep itself in the middle of both walls. We are not sure if that was the intention of the two D's assignment, but such behavior does make sense to us. The problem with trying to stay in the middle of two walls is that such behavior is different from that of trying to follow a wall at a given distance. 
 
-There are two reasons why the robot may receive data from both lasers: either each laser detects a different wall, that is, the robot is between two walls; or both lasers detect the same wall, which may happen because the robot is facing the wall or because it is at a corner. Our way of dealing with data from both lasers is to use the laser that is closest to a wall. Unless the robot has already chosen a laser, in which case it should stick to it. This way, we avoid running into a wall because we where paying attention to the wrong laser. We also avoid turning around in an inner corner, because suddenly the other laser is closer to the wall. Plus, when the robot is facing a wall, it will eventually chose one laser, which means it will chose a direction in which to follow the wall. Unfortunately, it also means that when it is between two walls, the robot will pick the closest wall and follow it. To change this behaviour, we need to be able to distinguish between the two scenarios above, and honestly we did not think further about this.
+There are two reasons why the robot may receive data from both lasers: either each laser detects a different wall, that is, the robot is between two walls; or both lasers detect the same wall, which may happen because the robot is facing the wall or because it is at a corner. Our way of dealing with data from both lasers is to use the laser that is closest to a wall. Unless the robot has already chosen a laser, in which case it should stick to it. This way, we avoid running into a wall because we where paying attention to the wrong laser. We also avoid turning around in an inner corner, because suddenly the other laser is closer to the wall. Plus, when the robot is facing a wall, it will eventually chose one laser, which means it will chose a direction in which to follow the wall. Unfortunately, it also means that when it is between two walls, the robot will pick the closest wall and follow it. To change this behavior, we need to be able to distinguish between the two scenarios above, and honestly we did not think further about this.
 
 \subsection{Facing a wall}
 
 When the robot first detects and approaches a wall, most often it will start to face that wall. Then as it goes towards the wall, because it is still further away from the wall then the desired distance, it does so in a peculiar way. Instead of going forward, it turns considerably left and right while approaching the wall.
 
-We believe this behaviour is explained by the way the robot chooses which laser to use. Suppose it chooses the left laser, then, since it is too far away from the wall, it quickly turns left, effectively making the left laser loose sight of the wall. Hence, it starts using the right laser, quickly turning right to get closer to the wall and possibly making the right laser loose sight of the wall. This may happen a few times, but eventually the robot is close enough that when turning, the chosen laser will not loose sight of the wall, leading to a normal behaviour from then on.
+We believe this behavior is explained by the way the robot chooses which laser to use. Suppose it chooses the left laser, then, since it is too far away from the wall, it quickly turns left, effectively making the left laser loose sight of the wall. Hence, it starts using the right laser, quickly turning right to get closer to the wall and possibly making the right laser loose sight of the wall. This may happen a few times, but eventually the robot is close enough that when turning, the chosen laser will not loose sight of the wall, leading to a normal behavior from then on.
 
 We tried to fix this, making to robot stick to the first laser it chooses. But then it just started going around, because it had lost sight of the wall. So, although it is a strange way of going towards the wall, we kept it, because it works.
 
 \subsection{Following a straight wall}
 
-Sometimes, when the robot is following a straight wall, it will not go strictly forward, but very slightly deviate left and right. This is due to the noise from the lasers, and the error margin we use. We use a 0.01 error margin to quickly fix small deviations from the wall by turning $Pi/8$. If the noise is greater than 0.01, the robot will think it is too close or too far from the wall and turn a bit.
+Sometimes, when the robot is following a straight wall, it will not go strictly forward, but very slightly deviate left and right. This is due to the noise from the lasers, and the error margin we use. We use a 0.01 error margin to quickly fix small deviations from the wall by turning $\pi/8$. If the noise is greater than 0.01, the robot will think it is too close or too far from the wall and turn a bit.
 
-The reason for the error margin of 0.01 is because it makes the robot behave better when the wall does turn, that is, the robot follows the wall keeping a distance very close to the desired one. This happens even in sharp outer corners, that is when the robot needs to turn $3Pi/2$.
-
+The reason for the error margin of 0.01 is because it makes the robot behave better when the wall does turn, that is, the robot follows the wall keeping a distance very close to the desired one. This happens even in sharp outer corners, that is when the robot needs to turn $\pi/2$.
 
 
 %%%%%%%%%%%%%%%
 % CONCLUSION %
 %%%%%%%%%%%%%%%
 \section{Conclusion}
-The conclusion goes here.
+
+
 
 \ifCLASSOPTIONcaptionsoff
   \newpage
