@@ -26,22 +26,20 @@ The abstract goes here.
 The keywords go here.
 \end{IEEEkeywords}}
 
-
 % make the title area
 \maketitle
-
 
 %%%%%%%%%%%%%%%%
 % INTRODUCTION %
 %%%%%%%%%%%%%%%%
 \section{Introduction}
-The most basic types of robotic systems are purely reactive. These systems do not have neither the ability to form memories, nor to use past experiences to inform current decisions. Since they are fast and rely only on the current sensor readings, instead of an accurate map, the use of which requires very accurate localization capabilities, reactive approaches are often used for robot navigation. However, reactive navigation does not plan ahead and is therefore susceptible to local minima. 
+The most basic types of robotic systems are purely reactive. These systems do not have neither the ability to form memories, nor to use past experiences to inform current decisions. Since they are fast and rely only on the current sensor readings, instead of a map, the use of which requires very accurate localization capabilities, reactive approaches are often used for robot navigation. However, reactive navigation does not plan ahead and is therefore susceptible to local minima. 
 
-In this project we developed a stable wall follower behavior for a simple reactive robot. The design, implementation and testing of our solution, were made with the support of the \textit{ROS} framework and the \textit{STDR Simulator} package. The robot is equipped with two sensors, that allow it to sense the world around and act according to their information. 
+In this project we developed a stable wall follower behavior for a simple reactive robot. The design, implementation and testing of our solution, were made with the support of the \textit{ROS} framework and the \textit{STDR Simulator} package. The robot is equipped with two lasers, that allow it to sense the world around and act according to their information. 
 
 In the following sections we will describe the architecture of our design, discuss the results and limitations of our approach and present some last remarks.
 
-\cite{example}
+%\cite{example}
 
 %%%%%%%%%%%%%%%%
 % ARCHITECTURE %
@@ -51,109 +49,120 @@ In the following sections we will describe the architecture of our design, discu
 
 The project makes use of the \textit{ROS} framework and the \textit{STDR Simulator} package in the design of the robot and implementation of its behavior.
 
-The robot is disk-shaped, with a radius of 0.5cm and with an ideal skid steer kinematic, allowing for $360^{\circ}$ turns. It’s equipped with two laser sensors to detect obstacles, each one composed of 200 rays within an angle of $36^{\circ}$. Each sensor is rotated. The sensors have a maximum range of 3cm and a minimum range of 0.1cm. Additionally, the sensors are updated with a frequency of 10Hz. A schematic of the robot is presented in the figure \ref{fig:robot}.
+The robot is disk-shaped, with a radius of 0.5m and with an ideal skid steer kinematic, allowing for turns of $2\pi$ radians. It is equipped with two laser sensors to detect obstacles, each one composed of 200 rays within an angle of $\pi/4$ radians. The left sensor is $\pi/5$ radians rotated from the front of the robot and the right one is rotated $-\pi/5$ radians. The sensors have a maximum range of 3m and a minimum range of 0.1m. Additionally, the sensors are updated with a frequency of 10Hz. A schematic of the robot is presented in Figure~\ref{fig:robot}.
 
 
-   \begin{figure}[thpb]
-      \centering
-      \framebox{\parbox{3in}{\includegraphics[scale=0.2]{img/robo.jpg}}}
-      \caption{Schematic of the disk-shaped robot}
-      \label{fig:robot}
-   \end{figure}
-   
-   
+\begin{figure}[thpb]
+\centering
+\framebox{\parbox{3in}{\includegraphics[scale=0.2]{img/robo.jpg}}}
+\caption{Schematic of the disk-shaped robot}
+\label{fig:robot}
+\end{figure}
+
+
+\subsection{Maps}
+Three maps were developed to test the robot. They are all squares with sides of 720 pixels and a resolution of 0.05m/pixel, which entails an area of 36m$^2$ for each map. To stop the robot from trying to leave the map, all maps are equipped with a border wall.
+
+\begin{figure}[thpb]
+\centering
+\includegraphics[scale=0.2]{img/outD.png}
+\caption{The outD map}
+\label{fig:outD_map}
+\end{figure}
+
+The first map we used is a large D, as shown in Figure~\ref{fig:outD_map}. The initial position of the robot is inside this large D, thus it will follow the walls from the inside. We called this map outD.
+
+\begin{figure}[thpb]
+\centering
+\includegraphics[scale=0.2]{img/inD.png}
+\caption{The inD map}
+\label{fig:inD_map}
+\end{figure}
+
+The second map is a smaller D and can be seen in Figure~\ref{fig:inD_map}. The robot is initially placed outside this D and will follow the walls from the outside. Unless it happens to find the border wall before it finds the D wall. In that case, as we will see in Subsection~\ref{subsec:map_delimiting_walls}, the robot will follow the border wall from the inside. We named this map inD.
+
+\begin{figure}[thpb]
+\centering
+\includegraphics[scale=0.2]{img/DD.png}
+\caption{The DD map}
+\label{fig:DD_map}
+\end{figure}
+
+Finally, we used a map with a large D and a smaller D inside it, as shown in Figure~\ref{fig:DD_map}. The initial position of the robot is between both D's and it will navigate the map between both walls. We named this map DD.
+
 \subsection{Behaviour Architecture}
 
 The robot follows a simple subsumption based architecture.
 
-   \begin{figure}[thpb]
-      \centering
-      \includegraphics[scale=0.265]{img/architecture.jpg}
-      \caption{Subsumption architecture}
-      \label{fig:architecture}
-   \end{figure}
+\begin{figure}[thpb]
+\centering
+\includegraphics[scale=0.265]{img/architecture.jpg}
+\caption{Subsumption architecture}
+\label{fig:architecture}
+\end{figure}
 
-The architecture has two different states, as shown in the figure \ref{fig:architecture}: \textit{random movement} and \textit{follow wall}. The robot will begin with an initial movement characterized by a random linear speed $\nu$ and a random angular speed $\omega$. It will maintain this random movement up until it first discovers a wall. When it detects an obstacle, the robot will follow along its walls indefinitely. The implemented algorithms that dictate the two states are described in the following section. 
+The architecture has two different states, as shown in the figure \ref{fig:architecture}: \textit{random movement} and \textit{follow wall}. The robot will begin with an initial movement characterized by a random linear speed $\nu$ and a random angular speed $\omega$. It will maintain this random movement up until it first discovers a wall. When it detects an obstacle, the robot will follow along its walls indefinitely. The implemented algorithms that dictate the two states are described in the following subsection. 
 
 
 \subsection{Algorithms}
-\subsection{Initial random movement}\label{subsec:initial}
+\subsubsection{Initial random movement}\label{subsec:initial}
 
-Until it finds the wall, the robot moves randomly, that is, at each step it chooses random linear and angular velocities. Depending on the initial distance of the robot to the nearest wall and its orientation, this random search may take a long time. 
+Until it finds the wall, the robot moves randomly, that is, at each step it chooses random linear and angular velocities. At least this is the general idea, the actual implementation is a bit more complex. 
 
-We believe this wall finding time could be improved by making it more likely for the robot to move forward than for it to turn. This is clear if the robot is inside the wall it is suppose to find, like when it is inside the large D or between both D's. But in the case where the robot is outside the small D, going forward with higher probability might increase the likelihood of the robot finding the square walls delimiting the map, before it found the D walls.
+What happens is that in order to quickly respond to changes in the sensory data, the robot receives a new move command whenever laser data is updated. This means that previous messages are very quickly replaced with newer ones. In practice, when moving randomly the robot would move mostly forward, because turning messages would be replaced by newer messages before the robot completed the turn. Essentially, only repeated messages making the robot turn in the same direction would result in an actual turn, which is not very likely to happen.
 
-Since the map delimiting wall is only there to stop the robot from trying to leave the map and not to be followed, we kept the robot moving randomly. In any case, the only downside is longer waiting time.
+To fix this not so random movement of the robot, we use a counter and make the robot keep turning in the same direction until the counter runs out. We still allow the magnitude of the turn and the linear velocity to change randomly, only the direction of the turn stays constant while the counter is decreasing. Each successive value of the counter is also randomized, which allows for both long and short periods of turning in the same direction.
 
-\subsection{Follow wall}
+\subsubsection{Follow wall}
 Upon discovering an obstacle the goal of the robot is to follow an imaginary line at a distance $D_i$ from the wall. 
 
-   \begin{figure}[thpb]
-      \centering
-     \includegraphics[scale=0.3]{img/behaviour.jpg}
-      \caption{Robot behaviour following a wall}
-      \label{fig:wall}
-   \end{figure}
+\begin{figure}[thpb]
+\centering
+\includegraphics[scale=0.3]{img/behaviour.jpg}
+\caption{Robot behaviour following a wall}
+\label{fig:wall}
+\end{figure}
 
-To do so, the robot uses the readings from the lasers to correct its trajectory. Knowing from which of the sensors is coming the measurements, the robot knows if the wall is on its right or left side and can act accordingly. If the robot is coming to close to the wall, the angular velocity takes the current symmetric value. The same happens if the robot begins to stray too far from the wall. In both cases, the linear velocity is maintained. This behavior reflects in a trajectory like the one in figure \ref{fig:wall}. When the robot loses the readings from the laser, we know we are present in a corner of the map. In order to keep following the wall, we have to perform what we call a ``hard turn''. In this case, the robot duplicates its standard angular velocity and reduces to 10\% of its normal linear speed.
+To do so, the robot uses the readings from the lasers to correct its trajectory. Knowing from which of the sensors the measurements are coming, the robot knows if the wall is on its right or left side and can act accordingly. If the robot is getting to close to the wall (above 0.01m deviated from $D_i$), the angular velocity of absolute value $\pi/8$ is used to take it away from the all . The same happens if the robot begins to stray too far from the wall, but in the other direction. In both cases, the linear velocity of 1m/s is maintained. This behavior results in a less exaggerated version of the trajectory in figure \ref{fig:wall}.
 
-\subsection{Maps}
-Three maps were developed to test the robot. 
-%%TODO: describe maps - what size? resolution = 0.05;
+In order to accommodate sharper turns in the wall, if the distance from the wall is 0.1m below~$D_i$, the robot will turn with an absolute value of $\pi/4$ away from the wall. It will also reduce its normal linear velocity in 90\%, that is, to 0.1m/s.
 
-   \begin{figure}[thpb]
-      \centering
-     \includegraphics[scale=0.2]{img/DD.png}
-      \caption{The DD map}
-      \label{fig:DD_map}
-   \end{figure}
-   
-      \begin{figure}[thpb]
-      \centering
-     \includegraphics[scale=0.2]{img/inD.png}
-      \caption{The inD map}
-      \label{fig:inD_map}
-   \end{figure}
-   
-   \begin{figure}[thpb]
-      \centering
-     \includegraphics[scale=0.2]{img/outD.png}
-      \caption{The outD map}
-      \label{fig:outD_map}
-   \end{figure}
-
-
-
+When the robot loses the readings from the laser, we know we are present in an outer corner of the map. In order to keep following the wall, the robot turns with an absolute value of $\pi/4$ in the direction of the wall, while reducing its linear velocity to 0.5m/s.
 
 %%%%%%%%%%%
 % RESULTS %
 %%%%%%%%%%%
 \section{Results}
-For each map, the robot will be place in a predefined position, before initiating its random movement. To validate the solution, we were interested in testing the ability of the robot to properly follow the wall present in each map and the stability of the algorithm. 
-The ideal distances were set to $1m$ for the inD and outD maps and $2m$ for the DD map. For all cases, it was allowed and error of $0.1$ from the ideal distance. The distance to the wall was measured as the robot followed the wall, resulting in the following graphs.
- 
-   \begin{figure}[thpb]
-      \centering
-     \includegraphics[scale=0.2]{img/map_DD.jpg}
-      \caption{Robot stability to map DD}
-      \label{fig:result_DD_map}
-   \end{figure}
-   
-      \begin{figure}[thpb]
-      \centering
-     \includegraphics[scale=0.19]{img/map_inD.jpg}
-      \caption{Robot stability to map inD}
-      \label{fig:result_inD_map}
-   \end{figure}
-   
-   \begin{figure}[thpb]
-      \centering
-     \includegraphics[scale=0.2]{img/map_outD.jpg}
-      \caption{Robot stability to map outD}
-      \label{fig:result_outD_map}
-   \end{figure}
+For each map, the robot will be placed in a predefined position, before initiating its random movement. To validate the solution, we were interested in testing the ability of the robot to properly follow the walls present in each map and the stability of the algorithm.
 
+The ideal distances were set to 1m for the inD and outD maps and 2m for the DD map. For all cases, an error of 0.01m from the ideal distance is allowed. The distance to the wall was measured as the robot followed the wall, resulting in the graphs shown in Figures~\ref{fig:result_outD_map},~\ref{fig:result_inD_map}~and~\ref{fig:result_DD_map}
 
+\begin{figure}[thpb]
+\centering
+\includegraphics[scale=0.2]{img/map_outD.jpg}
+\caption{Robot stability in map outD}
+\label{fig:result_outD_map}
+\end{figure}
+
+For the map outD, once the robot finds the wall we can see that it keeps a stable distance around 1m from it most of the time. The exceptions seen in the graph are when the robot gets to a sharp corner of the D, then it starts getting very close to the wall and in an effort to fix this ends up going a little further away from it, finally resuming its intended distance and stable movement.
+
+\begin{figure}[thpb]
+\centering
+\includegraphics[scale=0.16]{img/map_inD.jpg}
+\caption{Robot stability in map inD}
+\label{fig:result_inD_map}
+\end{figure}
+
+As for the map inD, what happens is that in the sharp D corners, the robot temporarily looses sight of the wall, because the wall turn is away from the robot and not in front of the robot like for outD. The robot quickly turns and sees the wall again, but then needs to fix its position as it gets too close to the wall. This process is repeated a few times until the robot manages to stabilize its movements again.
+
+\begin{figure}[thpb]
+\centering
+\includegraphics[scale=0.18]{img/map_DD.jpg}
+\caption{Robot stability in map DD}
+\label{fig:result_DD_map}
+\end{figure}
+
+The graph for the DD map is basically a repetition of the outD one. This happens because the robot chooses to follow the outside large D wall, as it is closer to it. When the robot chooses to follow the inside small D wall, the graph will be similar to that of Figure~\ref{fig:result_inD_map}.
 
 %%%%%%%%%%%%%%%
 % LIMITATIONS %
@@ -162,13 +171,21 @@ The ideal distances were set to $1m$ for the inD and outD maps and $2m$ for the 
 
 Nothing is perfect and our wall following robot is not an exception. Most of the limitations we detected in our robot are due to the simple ideas we used to make it work. However, we still believe that the simplicity of the code is worth the restrictions it creates.
 
-\subsection{Map delimiting walls}
+\subsection{Map delimiting walls}\label{subsec:map_delimiting_walls}
 
 In order to keep the robot from trying to leave the map, we had to create squared walls around the map. These walls are not the ones the robot is supposed to find and follow, but if it does find these walls it will follow them forever.
 
 Of course this only happens for the small D, whose walls the robot is supposed to follow from the outside. In the cases where the robot is inside the large D or between the two D's, it cannot move through those walls, therefore it will never find and follow the square map delimiting walls.
 
 For the small D, we defined an initial position for the robot that is closer to the D than to the outside wall, although it sees neither of these walls. Thus, even though the initial movement of the robot will be random, it is more likely to find the small D wall and follow it. In case it finds the outside wall, the program should be stopped, but if it is not, the robot will still follow the outside wall without any problem.
+
+\subsection{Initial random movement}
+
+As we saw, the robot starts moving randomly until it finds a wall. Depending on the initial distance of the robot to the nearest wall and its orientation, this random search may take a long time. 
+
+We believe this wall finding time could be improved by making it more likely for the robot to move forward than for it to turn. This is clear if the robot is inside the wall it is suppose to find, like when it is inside the large D or between both D's. But in the case where the robot is outside the small D, going forward with higher probability might increase the likelihood of the robot finding the square walls delimiting the map, before it found the D walls.
+
+Since the map delimiting wall is only there to stop the robot from trying to leave the map and not to be followed, we kept the robot moving randomly. In any case, the only downside is longer waiting time.
 
 \subsection{Desired wall distance}
 
@@ -178,7 +195,7 @@ Perhaps there is some way to make the robot resume its movements if it runs into
 
 As an example, for the large D that the robot follows from the inside, if the defined distance to the wall is 0.6 or less, the robot runs into the wall at the left corners of the D.
 
-Although we did not test it, we are convinced that for smaller angled corners, the desired distance that the robot should keep from the wall must increase in order for it not to crash.
+Although it was not in the initial objective, we also tested the robot in sharper corners, using a star shaped map. As we anticipated, the desired distance that the robot should keep from the wall must increase in order for it not to crash.
 
 \subsection{Initial robot position}
 
@@ -204,6 +221,12 @@ Sometimes, when the robot is following a straight wall, it will not go strictly 
 
 The reason for the error margin of 0.01 is because it makes the robot behave better when the wall does turn, that is, the robot follows the wall keeping a distance very close to the desired one. This happens even in sharp outer corners, that is when the robot needs to turn $\pi/2$.
 
+\subsection{Very sharp corners}
+
+Given the position of the lasers and their amplitude, when the robot is facing a very sharp corner, like in the outside of a star shaped wall, it may run into the corner. This happens because the robot is a little blind for small front obstacles.
+
+However, it will only happen in a very sharp corner and if the robot is facing that corner head on.
+
 
 %%%%%%%%%%%%%%%
 % CONCLUSION %
@@ -212,14 +235,15 @@ The reason for the error margin of 0.01 is because it makes the robot behave bet
 
 
 
+
 \ifCLASSOPTIONcaptionsoff
-  \newpage
+\newpage
 \fi
 
 %%%%%%%%%%%%%%%%
 % BIBLIOGRAPHY %
 %%%%%%%%%%%%%%%%
-\bibliographystyle{IEEEtran}
-\bibliography{IEEEabrv,wall_bib}
+%\bibliographystyle{IEEEtran}
+%\bibliography{IEEEabrv,wall_bib}
 
 \end{document}
