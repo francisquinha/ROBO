@@ -97,10 +97,63 @@ Upon discovering an obstacle the goal of the robot is to follow an imaginary lin
 
 To do so, the robot uses the readings from the lasers to correct its trajectory. Knowing from which of the sensors is coming the measurements, the robot knows if the wall is on its right or left side and can act accordingly. If the robot is coming to close to the wall, the angular velocity takes the current symmetric value. The same happens if the robot begins to stray too far from the wall. In both cases, the linear velocity is maintained. This behavior reflects in a trajectory like the one in figure \ref{fig:wall}. When the robot loses the readings from the laser, we know we are present in a corner of the map. In order to keep following the wall, we have to perform what we call a ``hard turn''. In this case, the robot duplicates its standard angular velocity and reduces to 10\% of its normal linear speed.
 
+\subsection{Maps}
+Three maps were developed to test the robot. 
+%%TODO: describe maps - what size? resolution = 0.05;
+
+   \begin{figure}[thpb]
+      \centering
+     \includegraphics[scale=0.2]{img/DD.png}
+      \caption{The DD map}
+      \label{fig:DD_map}
+   \end{figure}
+   
+      \begin{figure}[thpb]
+      \centering
+     \includegraphics[scale=0.2]{img/inD.png}
+      \caption{The inD map}
+      \label{fig:inD_map}
+   \end{figure}
+   
+   \begin{figure}[thpb]
+      \centering
+     \includegraphics[scale=0.2]{img/outD.png}
+      \caption{The outD map}
+      \label{fig:outD_map}
+   \end{figure}
+
+
+
+
 %%%%%%%%%%%
 % RESULTS %
 %%%%%%%%%%%
 \section{Results}
+For each map, the robot will be place in a predefined position, before initiating its random movement. To validate the solution, we were interested in testing the ability of the robot to properly follow the wall present in each map and the stability of the algorithm. 
+The ideal distances were set to $1m$ for the inD and outD maps and $2m$ for the DD map. For all cases, it was allowed and error of $0.1$ from the ideal distance. The distance to the wall was measured as the robot followed the wall, resulting in the following graphs.
+ 
+   \begin{figure}[thpb]
+      \centering
+     \includegraphics[scale=0.2]{img/map_DD.jpg}
+      \caption{Robot stability to map DD}
+      \label{fig:result_DD_map}
+   \end{figure}
+   
+      \begin{figure}[thpb]
+      \centering
+     \includegraphics[scale=0.19]{img/map_inD.jpg}
+      \caption{Robot stability to map inD}
+      \label{fig:result_inD_map}
+   \end{figure}
+   
+   \begin{figure}[thpb]
+      \centering
+     \includegraphics[scale=0.2]{img/map_outD.jpg}
+      \caption{Robot stability to map outD}
+      \label{fig:result_outD_map}
+   \end{figure}
+
+
 
 %%%%%%%%%%%%%%%
 % LIMITATIONS %
