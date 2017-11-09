@@ -19,9 +19,9 @@ robot:
           frequency: 10
           frame_id: left
           pose:
-            x: 0.28284271247
-            y: 0.28284271247
-            theta: 0.78539816339
+            x: 0.23511410091 #0.28284271247
+            y: 0.32360679775 #0.28284271247
+            theta: 0.62831853071 #0.78539816339
           noise:
             noise_specifications:
               noise_mean: 0.5
@@ -36,9 +36,9 @@ robot:
           frequency: 10
           frame_id: right
           pose:
-            x: 0.28284271247
-            y: -0.28284271247
-            theta: -0.78539816339
+            x: 0.23511410091 #0.28284271247
+            y: -0.32360679775 #0.28284271247
+            theta: -0.62831853071 #0.78539816339
           noise:
             noise_specifications:
               noise_mean: 0.5
