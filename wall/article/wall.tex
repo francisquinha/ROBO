@@ -9,6 +9,7 @@
 \usepackage{scalefnt}
 \usepackage{comment} 
 \usepackage{graphicx}
+\usepackage{url}
 
 \begin{document}
 
@@ -33,9 +34,9 @@ The keywords go here.
 % INTRODUCTION %
 %%%%%%%%%%%%%%%%
 \section{Introduction}
-The most basic types of robotic systems are purely reactive. These systems do not have neither the ability to form memories, nor to use past experiences to inform current decisions. Since they are fast and rely only on the current sensor readings, instead of a map, the use of which requires very accurate localization capabilities, reactive approaches are often used for robot navigation. However, reactive navigation does not plan ahead and is therefore susceptible to local minima. 
+The most basic types of robotic systems are purely reactive~\cite{Reactive}. These systems do not have neither the ability to form memories, nor to use past experiences to inform current decisions. Since they are fast and rely only on the current sensor readings, instead of a map, the use of which requires very accurate localization capabilities, reactive approaches are often used for robot navigation. However, reactive navigation does not plan ahead and is therefore susceptible to local minima. 
 
-In this project we developed a stable wall follower behavior for a simple reactive robot. The design, implementation and testing of our solution, were made with the support of the \textit{ROS} framework and the \textit{STDR Simulator} package. The robot is equipped with two lasers, that allow it to sense the world around and act according to their information. 
+In this project we developed a stable wall follower behavior for a simple reactive robot. The design, implementation and testing of our solution, were made with the support of the \textit{ROS} framework~\cite{ROS,AGITR} and the \textit{STDR Simulator} package~\cite{STDR}. The robot is equipped with two lasers, that allow it to sense the world around and act according to their information. 
 
 In the following sections we will describe the architecture of our design, discuss the results and limitations of our approach and present some last remarks.
 
@@ -102,7 +103,6 @@ The robot follows a simple subsumption based architecture.
 \end{figure}
 
 The architecture has two different states, as shown in the figure \ref{fig:architecture}: \textit{random movement} and \textit{follow wall}. The robot will begin with an initial movement characterized by a random linear speed $\nu$ and a random angular speed $\omega$. It will maintain this random movement up until it first discovers a wall. When it detects an obstacle, the robot will follow along its walls indefinitely. The implemented algorithms that dictate the two states are described in the following subsection. 
-
 
 \subsection{Algorithms}
 \subsubsection{Initial random movement}\label{subsec:initial}
@@ -246,7 +246,7 @@ In any case, we are pleased with our robot, because it is quite capable of stabl
 %%%%%%%%%%%%%%%%
 % BIBLIOGRAPHY %
 %%%%%%%%%%%%%%%%
-%\bibliographystyle{IEEEtran}
-%\bibliography{IEEEabrv,wall_bib}
+\bibliographystyle{IEEEtran}
+\bibliography{IEEEabrv,wall_bib}
 
 \end{document}
