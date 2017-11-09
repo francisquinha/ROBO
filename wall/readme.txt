@@ -11,7 +11,8 @@ Wall following eactive robot using ROS and STDR_Simulator.
 1. Configure a catkin workspace, let's call it catkin_ws
 2. Copy the wall folder to catkin_ws/src
 3. Build the catkin workspace: catkin build
-4. Launch one of the available launchers:
+4. Setup environment variables: . devel/setup.bash
+5. Launch one of the available launchers:
 
           * roslaunch wall wall_DD.launch
           * roslaunch wall wall_inD.launch
