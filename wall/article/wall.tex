@@ -123,7 +123,7 @@ Upon discovering an obstacle the goal of the robot is to follow an imaginary lin
 \label{fig:wall}
 \end{figure}
 
-To do so, the robot uses the readings from the lasers to correct its trajectory. Knowing from which of the sensors the measurements are coming, the robot knows if the wall is on its right or left side and can act accordingly. If the robot is getting to close to the wall (above 0.01m deviated from $D_i$), the angular velocity of absolute value $\pi/8$ is used to take it away from the all . The same happens if the robot begins to stray too far from the wall, but in the other direction. In both cases, the linear velocity of 1m/s is maintained. This behavior results in a less exaggerated version of the trajectory in figure \ref{fig:wall}.
+To do so, the robot uses the readings from the lasers to correct its trajectory. Knowing from which of the sensors the measurements are coming, the robot knows if the wall is on its right or left side and can act accordingly. If the robot is getting too close to the wall (above 0.01m deviated from $D_i$), the angular velocity of absolute value $\pi/8$ is used to take it away from the all . The same happens if the robot begins to stray too far from the wall, but in the other direction. In both cases, the linear velocity of 1m/s is maintained. This behavior results in a less exaggerated version of the trajectory in figure \ref{fig:wall}.
 
 In order to accommodate sharper turns in the wall, if the distance from the wall is 0.1m below~$D_i$, the robot will turn with an absolute value of $\pi/4$ away from the wall. It will also reduce its normal linear velocity in 90\%, that is, to 0.1m/s.
 
@@ -233,8 +233,11 @@ However, it will only happen in a very sharp corner and if the robot is facing t
 %%%%%%%%%%%%%%%
 \section{Conclusion}
 
+Our implementation of a wall follower reactive robot is mostly simple, especially when it comes to the algorithm that actually makes the robot follow a wall. If the robot is getting too far from the wall it turns into the wall, if it is getting too close it turns away from the wall and otherwise it goes forward.
 
+The end result has several limitations and at least some of them come from the simple algorithm used. For example, one could make the turn angle of the robot directly depend on how far away from the desired wall distance it is, instead of using just two rough cuts. We believe at least this idea has some merit and could be explored if the project was given some extra time.
 
+In any case, we are pleased with our robot, because it is quite capable of stably following the proposed D map walls. Plus, with some careful distance setup it is even capable of following more complicated maps such as the star shaped ones.
 
 \ifCLASSOPTIONcaptionsoff
 \newpage
