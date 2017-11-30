@@ -1,0 +1,23 @@
+Contrato do Projeto da Unidade Curricular de Robótica 2017/2018
+
+Aluna: Ângela Filipa Pereira Cardoso
+
+Professor: Armando Jorge Miranda de Sousa
+
+1. Como projeto final da unidade curricular de Robótica, a aluna compromete-se a adaptar a aplicação Android SquirlRob ao uso da base robótica Rob do projeto Robobo.
+
+2. A aluna terá acesso ao código fonte da aplicação SquirlRob, assim como à sua documentação. 
+
+	2.1. Caso não exista documentação, deve ser providenciada uma breve explicação do código fonte, por parte dos autores.
+
+	2.2. Deve haver uma disponibilidade razoável por parte dos autores para ajudar com eventuais dificuldades relacionadas com a aplicação SquirlRob que surjam durante o projeto.
+
+3. A aluna terá acesso ao código fonte da aplicação Robobo, em particular ao módulo 'rob-interface-module', que efetua a ligação da base robótica ao telemóvel Android. Deve ainda ter acesso à documentação da aplicação e do módulo referidos.
+
+4. No decorrer do projeto, a aluna deve efetuar sempre que desejável melhorias à organização e estruturação do código.
+
+5. Para crédito extra, a aluna pode fazer melhorias ao interface da aplicação ou adicionar novas funcionalidades, nomeadamente funcionalidades particulares relacionadas com a base Rob.
+
+6. Na entrega intermédia do projeto, a 14-12-2017, a aluna compromete-se a ter um primeiro protótipo com alguma funcionalidade de ligação entre a aplicação SquirlRob e a base Robobo.
+
+7. Na entrega final do projeto, a 05-01-2017, a aplicação SquirlRob deve estar completamente integrada com a base Robobo, estando disponíveis todas as suas funcionalidades atuais: ligar por bluetooth à base, abrir e fechar a câmara, calibrar automática e manualmente a cor da linha para o robô seguir, informar o utilizador do estado atual da aplicação, programar no telemóvel.

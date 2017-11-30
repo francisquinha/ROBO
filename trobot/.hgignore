@@ -1,0 +1,8 @@
+syntax: glob
+tRobot/build/
+openCVLibrary249/build/
+*.iml
+.gradle/
+.idea/
+build/
+local.properties
