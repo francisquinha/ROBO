@@ -1,0 +1,4 @@
+<resources>
+    <string name="bluetooth_dialog_title">Select Robobo Device</string>
+    <string name="bluetooth_dialog_ok">OK</string>
+</resources>
