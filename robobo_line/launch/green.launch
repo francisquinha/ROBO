@@ -1,0 +1,8 @@
+<launch>
+	<node
+		pkg="robobo_line"
+		type="line"
+		name="robobo_line"
+		args="2 8 0 8 8 0.8"
+		output="screen"/>
+</launch>
