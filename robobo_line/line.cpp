@@ -15,6 +15,7 @@
 #include <sstream>
 
 #define SSTR(x) static_cast< std::ostringstream & > ((std::ostringstream() << std::dec << x )).str()
+#define DEBUG 0
 
 using namespace std;
 
@@ -94,12 +95,17 @@ private:
     float distance;
 
     float getError(cv::Mat image, float distance) {
-        cv::namedWindow("Image", cv::WINDOW_AUTOSIZE);        
-        cv::imshow("Image", image);
-        cv::Mat roi, hsv, mask, mono, blur, thresh, drawing;
+        #ifdef DEBUG
+            cv::namedWindow("Image", cv::WINDOW_AUTOSIZE);        
+            cv::imshow("Image", image);
+        #endif
+        cv::Mat roi, hsv, mask, mono, blur, thresh;
         roi = image(cv::Rect(0, distance, image.cols, image.rows/5));
-        cv::namedWindow("ROI", cv::WINDOW_AUTOSIZE);        
-        cv::imshow("ROI", roi);
+        #ifdef DEBUG
+            cv::Mat drawing;
+            cv::namedWindow("ROI", cv::WINDOW_AUTOSIZE);        
+            cv::imshow("ROI", roi);
+        #endif
         switch(this->color){
             case red:
                 cv::cvtColor(roi, hsv, cv::COLOR_BGR2HSV);
@@ -126,17 +132,25 @@ private:
                 roi.setTo(cv::Scalar(255, 255, 255), mask);
                 break;            
         }
-        cv::namedWindow("Mask", cv::WINDOW_AUTOSIZE);        
-        cv::imshow("Mask", roi);
+        #ifdef DEBUG
+            cv::namedWindow("Mask", cv::WINDOW_AUTOSIZE);        
+            cv::imshow("Mask", roi);
+        #endif
         cv::cvtColor(roi, mono, cv::COLOR_BGR2GRAY);
-        cv::namedWindow("Mono", cv::WINDOW_AUTOSIZE);        
-        cv::imshow("Mono", mono);
+        #ifdef DEBUG
+            cv::namedWindow("Mono", cv::WINDOW_AUTOSIZE);  
+            cv::imshow("Mono", mono);
+        #endif
         cv::GaussianBlur(mono, blur, cv::Size(9, 9), 2, 2);
-        cv::namedWindow("Blur", cv::WINDOW_AUTOSIZE);        
-        cv::imshow("Blur", blur);
+        #ifdef DEBUG
+            cv::namedWindow("Blur", cv::WINDOW_AUTOSIZE);        
+            cv::imshow("Blur", blur);
+        #endif
         cv::threshold(blur, thresh, 100, 255, cv::THRESH_BINARY_INV | cv::THRESH_OTSU);
-        cv::namedWindow("Thresh", cv::WINDOW_AUTOSIZE);        
-        cv::imshow("Thresh", thresh);
+        #ifdef DEBUG
+            cv::namedWindow("Thresh", cv::WINDOW_AUTOSIZE);        
+            cv::imshow("Thresh", thresh);
+        #endif
         std::vector< std::vector< cv::Point > > contours;
         std::vector< cv::Vec4i > hierarchy;
         cv::findContours(thresh, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
@@ -147,14 +161,16 @@ private:
             cv::Moments moments = cv::moments(contours[i]);
             if (moments.m00 > 10) {
                 cv::Point center(moments.m10/moments.m00, moments.m01/moments.m00);
-                cv::cvtColor(thresh, drawing, cv::COLOR_GRAY2BGR);
-                cv::drawContours(drawing, contours, i, cv::Scalar(0, 255, 0), 2, 8, hierarchy, 0, cv::Point());
-                cv::namedWindow("Contours", cv::WINDOW_AUTOSIZE);        
-                cv::imshow("Contours", drawing);
-                cv::circle(drawing, center, 4, cv::Scalar(0, 0, 255), -1, 8, 0 );
-                cv::namedWindow("Final", cv::WINDOW_AUTOSIZE);        
-                cv::imshow("Final", drawing);
-                cv::waitKey(0);
+                #ifdef DEBUG
+                    cv::cvtColor(thresh, drawing, cv::COLOR_GRAY2BGR);
+                    cv::drawContours(drawing, contours, i, cv::Scalar(0, 255, 0), 2, 8, hierarchy, 0, cv::Point());
+                    cv::namedWindow("Contours", cv::WINDOW_AUTOSIZE);        
+                    cv::imshow("Contours", drawing);
+                    cv::circle(drawing, center, 4, cv::Scalar(0, 0, 255), -1, 8, 0 );
+                    cv::namedWindow("Final", cv::WINDOW_AUTOSIZE);        
+                    cv::imshow("Final", drawing);
+                    cv::waitKey(0);
+                #endif
                 double e = cv::norm(center - position);
                 if (e < error) {
                     error = e;
@@ -171,7 +187,7 @@ private:
             cv::Mat camera = cv_bridge::toCvShare(msg, "bgr8")->image;
             float new_error = getError(camera, this->distance * camera.rows);
             ROS_INFO_STREAM("Error: " << new_error);
-            //move(new_error);
+            move(new_error);
         }
         catch (cv_bridge::Exception& e) {
             ROS_ERROR("Could not convert from '%s' to 'jpg'.", msg->encoding.c_str());
